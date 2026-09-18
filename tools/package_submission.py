@@ -21,7 +21,7 @@ def main():
     files = []
     for package in ['model', 'controller', 'cli', 'storage', 'view', 'tests']:
         files.extend((ROOT / package).glob('*.py'))
-    for name in ['main.py','README.md','deploy_readme.md','pyproject.toml','LICENSE',
+    for name in ['main.py','README.md','README.zh-CN.md','deploy_readme.md','deploy_readme.zh-CN.md','pyproject.toml','LICENSE',
                  'coverage_report.txt','coverage_report.pdf','requirements_coverage.md','requirements_coverage.pdf','tools/check_coverage.py',
                  'tools/check_submission.py','tools/package_submission.py','tools/demo_session.py']:
         files.append(ROOT / name)

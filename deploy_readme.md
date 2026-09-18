@@ -1,58 +1,73 @@
-# 部署与实施记录
+# Deployment and implementation log
 
-本文件按时间顺序记录项目实施、验证和文档更新。时间以本机（Asia/Hong_Kong）为准。
+**English** | [中文](deploy_readme.zh-CN.md)
+
+This file records project implementation, verification, and documentation updates in chronological order. Times follow the local machine (Asia/Hong_Kong).
 
 ## 2026-09-18
 
-1. 检查本地项目目录，确认原始内容包括课程项目 PDF 和中文项目说明总结。
-2. 核对 GitHub 仓库 `G0aT-Shen/3211_group_project`，初始化本地 Git，关联 `origin`，同步 `main` 分支，并验证本地与远程提交一致。
-3. 阅读 `docs/system_design.md`。将其中的 Python 3.11+、标准库、MVC 分层、四类 PIR、JSON `.pim`、搜索表达式和 T01–T05 任务分解作为实现蓝图；文档中的设计假设不视为额外用户指令。
-4. 创建模型层：`model/` 下的 `PIR` 抽象基类、`TextPIR`、`TaskPIR`、`EventPIR`、`ContactPIR`、领域异常和日期解析工具。
-5. 创建控制器和存储层：`PIMManager`、`PIRFactory`、JSON `Storage`，实现单调递增 ID、CRUD、搜索编排、序列化和 `.pim` 文件读写。
-6. 创建命令交互和视图层：`CommandParser`、递归下降 `SearchParser`、搜索 AST、`Printer`、`Repl` 和 `main.py`。支持 `contains`、时间比较、`&&`、`||`、`!`、括号和四类 PIR 命令。
-7. 创建 12 个标准库 `unittest` 测试，覆盖模型、搜索、控制器和存储；首次运行发现当前 macOS Python 3.9 不兼容 PEP 604 联合类型注解，随后加入延迟注解以兼容 Python 3.9+。
-8. 验证结果：`python3 -m unittest discover -v` 通过 12/12；CLI 冒烟测试完成 add、search、edit、print、save、delete、load、exit 全流程。
-9. 使用 `python3 -m trace --count --summary --coverdir .coverage --module unittest discover > coverage_report.txt` 生成覆盖率摘要；将 trace 产生的明细目录设为忽略文件，保留根目录摘要作为交付物。
-10. 更新 `README.md`，补充环境、运行命令、CLI 示例、测试和覆盖率命令；本文件用于持续记录后续每次改动。
-11. 修正 `edit event --start` 到模型 `start_time` 的字段映射，允许搜索表达式末尾空格，并将覆盖率命令改为 `--coverdir .coverage`，避免污染系统 Python 安装目录。
-12. 最终验证：12 个单元测试通过；`compileall` 无语法错误；覆盖率摘要成功生成；当前工作区仅包含本次实现、文档和测试新增/修改，未执行远程推送。
+1. Inspected the local project directory and confirmed the original content: the course project PDF and a Chinese summary of the specification.
+2. Checked the GitHub repository `G0aT-Shen/3211_group_project`, initialised local Git, associated `origin`, synced the `main` branch, and verified that local and remote commits matched.
+3. Read `docs/system_design.md`. Used its Python 3.11+, standard-library, MVC-layered, four-PIR-types, JSON `.pim`, search-expression, and T01–T05 task breakdown as the implementation blueprint; design assumptions in that document were not treated as additional user instructions.
+4. Created the model layer: the `PIR` abstract base class plus `TextPIR`, `TaskPIR`, `EventPIR`, and `ContactPIR` under `model/`, along with domain exceptions and date-parsing utilities.
+5. Created the controller and storage layers: `PIMManager`, `PIRFactory`, and the JSON `Storage`, implementing monotonic-integer IDs, CRUD, search orchestration, serialization, and `.pim` file read/write.
+6. Created the command-interaction and view layers: `CommandParser`, the recursive-descent `SearchParser`, the search AST, `Printer`, `Repl`, and `main.py`. Supported `contains`, time comparisons, `&&`, `||`, `!`, parentheses, and the four PIR commands.
+7. Created 12 standard-library `unittest` tests covering the model, search, controller, and storage; the first run exposed a PEP 604 union-annotation incompatibility on the current macOS Python 3.9, after which deferred annotations were added for Python 3.9+ compatibility.
+8. Verification result: `python3 -m unittest discover -v` passed 12/12; a CLI smoke test completed the full add, search, edit, print, save, delete, load, and exit flow.
+9. Generated the coverage summary with `python3 -m trace --count --summary --coverdir .coverage --module unittest discover > coverage_report.txt`; the trace detail directory was ignored and the root summary kept as a deliverable.
+10. Updated `README.md` with the environment, run commands, CLI examples, and test/coverage commands; this file is used to keep recording each later change.
+11. Fixed the field mapping from `edit event --start` to the model's `start_time`, allowed trailing spaces in search expressions, and changed the coverage command to `--coverdir .coverage` to avoid polluting the system Python installation directory.
+12. Final verification: 12 unit tests passed; `compileall` reported no syntax errors; the coverage summary generated successfully; the working tree contained only this round's implementation, documentation, and test additions — no remote push was performed.
 
-## 2026-09-18：按原始要求与评分标准完善（0.2）
+## 2026-09-18: Completion against the original requirements and marking rubric (0.2)
 
-1. 重新逐条核对原始课程 PDF 的 US1–US11、五项交付物和 Appendix A 评分标准。保留原始规划，给 `docs/system_design.md` 加历史版本说明；课程允许 Python/Java，Python 3.11 不是课程强制版本，JUnit 也并非被课程禁止。
-2. 新建 `model/factory.py`、`model/manager.py`、`model/search.py`，将集合、ID、字段规则和搜索 AST/解析全部集中到独立 model 包。controller 和旧 cli 搜索路径保留兼容导出，模型不依赖控制台或文件 IO。
-3. PIR 实例构造后禁止普通属性修改和删除；返回字段副本、只读集合视图。新增时返回分配 ID 后的新对象，编辑完整验证后原子替换，失败不修改旧记录，也不消耗 ID。
-4. 修复非法 print/delete ID 崩溃、未知编辑字段误报成功、带引号多词搜索失真等实际问题。拒绝重复/缺失/未知/不兼容字段，统一大小写、start 别名、严格分钟精度日期、ASCII 正整数 ID 和命令参数数量。
-5. 搜索支持所有文本/时间字段、类型、逻辑优先级和括号。字段、操作符和日期在遍历记录之前验证；空集合也不接受非法条件。明确缺失字段、否定、Unicode casefold 语义，并限制命令长度、搜索长度及嵌套深度。
-6. `.pim` 使用严格 UTF-8 JSON：精确 schema、唯一 ID/JSON 键、递增 next_id、禁止非有限数字及符号链接，文件上限 10 MiB。保存采用同目录临时文件、flush/fsync 和 os.replace；加载完整验证后才替换当前状态。
-7. 覆盖文件、加载丢弃未保存数据、退出丢弃修改均增加确认；EOF 提示未保存状态，Ctrl-C 取消当前输入。补全 help、用户手册和输出说明。
-8. 最终边界检查复现长文件名导致的未捕获 OSError，新增 3 项先失败后通过的回归测试，修复路径检查、覆盖检查和临时文件清理失败的异常边界。清理失败会报告残留临时路径，旧目标文件保持不变；真实 CLI 的长文件名 save/load 后继续 help/exit 流程已验证。
-9. 测试扩充到 55 项，涵盖各字段编辑、日期边界、逻辑组合、损坏文件、原子替换失败、取消确认、实际子进程 US1–US11 流程、标准库导入、model 分层约束和覆盖率报告缺失回退。已在 CPython 3.9.6 与 3.12.14 运行通过。配置 GitHub Actions 的 3.9/3.11/3.12 测试矩阵。
-10. 更正旧覆盖率摘要：旧 trace 用法未把未执行行计入分母，原先的“100%”不能作为完整覆盖证明。`tools/check_coverage.py` 使用 show_missing=True，当前实际 model 行覆盖率为 411/413（99.52%），包含抽象方法/Protocol 声明的未执行行，不声称分支覆盖率。根目录同时提供 `coverage_report.txt` 和 PDF。
-11. 编写编号 SRS、当前设计/API 合约、完整用户/开发者手册、US 与 SRS 双向核对表、评分验收清单、AI 辅助记录和汇报脚本。更新两个独立 Mermaid 文件；设计 PDF 包含架构图、类关系图、同一示例中的搜索与更新时序图和从 Python AST 生成的签名清单。
-12. 生成并检查 PDF 文档、6 页可编辑 PPTX 与汇报 PDF。按 PDF/演示稿技能进行逐页渲染核验，修正继承/依赖箭头、标题分页和演示稿验证临时路径。作者工具依赖与纯标准库应用隔离，不作为应用运行依赖或正式源码包依赖。
-13. `tools/demo_session.py` 从真实 main.py 子进程采集输出，生成有明确来源说明的控制台演示 MP4，时长 124 秒（2:04），1600×1000。使用视频解码器抽查开头、中段和结尾画面。该视频无配音，不替代要求真人持续露脸、展示学生证的组员汇报录像。
-14. 新建交付检查与打包工具：检查文档、视频格式/时长、真实人工核验字段和未填成员标记；材料不完整时拒绝生成 FINAL，允许显式 `--draft` 生成带未完成清单的 REVIEW_DRAFT。提交包排除 .git、缓存、个人 .pim 数据、私有构建材料及作者工具；个人证件/声明原件目录不进入 Git。
-15. 更新 README 的运行命令、架构、验证数字、文档/视频链接和打包方式。用户已确认：组员姓名/分工、贡献比例、Lecture 04 资料暂缺，保留待填；未编造审批、签名、身份或贡献比例。
-16. 本轮从本地提交 `0bbc0d2` 继续完善；提交与远程同步状态以 Git 历史和 `origin/main` 为准。正式交付仍需下面列出的团队材料，当前成果属于可运行、可审阅版本，不承诺课程满分。
-17. 最终审阅包已通过 ZIP 完整性检查；解压到独立临时目录后，55 项测试、覆盖率生成与 compileall 再次通过，模型覆盖率仍为 411/413。正式打包模式已验证会因缺少团队材料而拒绝执行；当前交付为 REVIEW_DRAFT，并附未完成事项清单。
+1. Re-checked the original course PDF item by item against US1–US11, the five deliverables, and the Appendix A rubric. Kept the original plan and added a historical-version note to `docs/system_design.md`; the course allows Python or Java, so Python 3.11 is not a mandatory version and JUnit is not forbidden.
+2. Added `model/factory.py`, `model/manager.py`, and `model/search.py`, concentrating collections, IDs, field rules, and the search AST/parser inside an independent `model` package. The controller and the legacy CLI search path keep compatibility exports, and the model depends on neither console nor file IO.
+3. PIR instances reject ordinary attribute mutation and deletion after construction, and return field copies and read-only collection views. Addition returns a new object carrying the allocated ID; an edit is atomically replaced only after full validation, and a failure neither modifies the old record nor consumes an ID.
+4. Fixed real problems: crashes on invalid print/delete IDs, false success reports for unknown edit fields, and distortion of quoted multi-word searches. Duplicate, missing, unknown, and incompatible fields are rejected, with consistent casing, the `start` alias, strict minute-precision dates, ASCII positive-integer IDs, and command-argument counts.
+5. Search supports all text and time fields, the type field, logical precedence, and parentheses. Fields, operators, and dates are validated before iterating records, and an empty collection still rejects invalid conditions. Missing-field, negation, and Unicode-casefold semantics are explicit, and command length, search length, and nesting depth are bounded.
+6. `.pim` uses strict UTF-8 JSON with an exact schema, unique IDs and JSON keys, an incrementing `next_id`, and rejection of non-finite numbers and symbolic links; the file limit is 10 MiB. Saving uses a same-directory temporary file with flush/fsync and `os.replace`; loading replaces the current state only after full validation.
+7. Added confirmations for overwriting a file, discarding unsaved data via load, and discarding changes on exit; EOF reports the unsaved state and Ctrl-C cancels the current line. Completed `help`, the user manual, and output descriptions.
+8. The final boundary check reproduced an uncaught `OSError` from a long filename. Three regression tests were added (failing first, then passing), fixing the exception boundaries for path checks, overwrite checks, and temporary-file cleanup. A failed cleanup reports the leftover temporary path while the previous target stays intact; a real CLI long-filename save/load followed by the help/exit flow was verified.
+9. Tests grew to 55, covering every field edit, date boundaries, logical combinations, corrupted files, atomic-replacement failure, cancellation confirmation, real subprocess US1–US11 flows, standard-library imports, model-layering constraints, and the missing-coverage-report fallback. They pass on CPython 3.9.6 and 3.12.14. A GitHub Actions 3.9/3.11/3.12 test matrix was configured.
+10. Corrected the old coverage summary: the previous trace command did not count unexecuted lines in the denominator, so the earlier "100%" was not a complete coverage proof. `tools/check_coverage.py` uses `show_missing=True`, and the actual model line coverage is 411/413 (99.52%), including unexecuted abstract-method and Protocol-declaration lines, with no branch-coverage claim. Both `coverage_report.txt` and a PDF are provided at the root.
+11. Wrote the numbered SRS, the current design/API contract, complete user and developer manuals, a bidirectional US-to-SRS checklist, the grading acceptance checklist, the AI-assistance record, and the presentation script. Updated the two standalone Mermaid files; the design PDF contains the architecture diagram, class-relation diagram, search and update sequence diagrams from one example, and a signature list generated from the Python AST.
+12. Generated and checked the PDF documents, the 6-page editable PPTX, and the presentation PDF. Per-page rendering checks were run per the PDF/presentation skills, fixing inheritance/dependency arrows, heading pagination, and presentation-verification temporary paths. Authoring-tool dependencies are isolated from the pure-standard-library application and are not runtime or official-source dependencies.
+13. `tools/demo_session.py` captures output from a real `main.py` subprocess and produces a console demo MP4 with an explicit provenance note, 124 seconds long (2:04) at 1600×1000. A video decoder was used to spot-check the opening, middle, and closing frames. The video has no narration and does not replace the required presenters-on-camera recording in which every presenter shows their student card.
+14. Added submission-check and packaging tools: they check documents, video format/duration, real human-verification flags, and unfilled member markers; when materials are incomplete they refuse to build a FINAL archive and allow an explicit `--draft` REVIEW_DRAFT with an open-items list. The submission archive excludes `.git`, caches, personal `.pim` data, private build material, and authoring tools; the personal identification/declaration directory does not enter Git.
+15. Updated the README's run commands, architecture, verification numbers, document/video links, and packaging method. The user confirmed that member names/roles, contribution shares, and Lecture 04 material are still unavailable and should stay as placeholders; no approvals, signatures, identities, or contribution shares were invented.
+16. This round continued from local commit `0bbc0d2`; commit and remote-sync state follow Git history and `origin/main`. Formal submission still needs the team materials listed below; the current result is a runnable, reviewable version and does not promise full marks.
+17. The final review archive passed its ZIP integrity check; after extraction to an independent temporary directory, the 55 tests, coverage generation, and `compileall` passed again, with model coverage still 411/413. The final packaging mode was verified to refuse execution because team materials are missing; the current deliverable is a REVIEW_DRAFT with an open-items list.
 
-## 2026-09-18：GitHub Actions Python 3.11 覆盖率兼容修复（0.3）
+## 2026-09-18: GitHub Actions Python 3.11 coverage compatibility (0.3)
 
-1. 检查 GitHub Actions 运行 `35301951751` 的原始作业日志。Python 3.11 的 54 项应用测试全部通过，唯一失败发生在 `python tools/check_coverage.py`：标准库 `trace` 未为 `model/__init__.py` 生成 `.cover` 文件，旧脚本抛出 `RuntimeError: Missing coverage for __init__.py`。Python 3.12 的测试、覆盖率和 compileall 均成功；矩阵 fail-fast 取消的作业不视为测试失败。
-2. 为缺失报告增加回归测试：覆盖率工具现在将未生成 `.cover` 的源码按零命中计入可执行行分母，不再把不同 Python 版本的 `trace` 输出差异误判为程序错误。每次运行前清理旧的 `model.*.cover`，防止过期报告掩盖问题。
-3. 将 GitHub Actions 矩阵设为 `fail-fast: false`，确保一个环境失败时仍收集其他 Python 版本的独立结果；更新 `actions/checkout` 和 `actions/setup-python` 到官方 v7 主版本。
-4. 自动化测试总数更新为 55；覆盖率保持 411/413（99.52%）。同步更新 README、覆盖率文本/PDF和 6 页演示稿。
-5. 提交 `954c3a2` 推送后，GitHub Actions 运行 `35303259313` 完成：Python 3.9、3.11、3.12 三个作业均成功，各自通过 55 项测试、覆盖率脚本和 compileall。托管 CI 状态据此更新。
+1. Inspected the raw job logs of GitHub Actions run `35301951751`. All 54 application tests passed on Python 3.11; the only failure was `python tools/check_coverage.py`: the standard-library `trace` did not produce a `.cover` file for `model/__init__.py`, and the old script raised `RuntimeError: Missing coverage for __init__.py`. Python 3.12 passed tests, coverage, and `compileall`; jobs cancelled by matrix fail-fast are not counted as test failures.
+2. Added a regression test for missing reports: the coverage tool now counts source files without a generated `.cover` as zero-hit toward the executable-line denominator, instead of misreading `trace` output differences across Python versions as a program error. Stale `model.*.cover` artifacts are cleared before each run so an outdated report cannot mask the problem.
+3. Set the GitHub Actions matrix to `fail-fast: false` so a failure in one environment still collects independent results for the other Python versions, and updated `actions/checkout` and `actions/setup-python` to the official v7 major versions.
+4. Updated the automated test total to 55; coverage stayed at 411/413 (99.52%). README, the coverage text/PDF, and the 6-page presentation were updated in sync.
+5. After commit `954c3a2` was pushed, GitHub Actions run `35303259313` completed: all three jobs (Python 3.9, 3.11, 3.12) succeeded, each passing the 55 tests, the coverage script, and `compileall`. The hosted-CI status was updated accordingly.
 
-## 后续正式提交检查清单
+## 2026-09-18: Code-side Chinese-to-English cleanup and bilingual docs (0.4)
 
-- [x] Python 3.9.6 / 3.12.14 完整测试通过，生成真实行覆盖率报告
-- [x] SRS、当前设计/API、用户/开发者手册及需求覆盖表提供 PDF
-- [x] 6 页汇报 PPTX/PDF、124 秒系统演示 MP4
-- [ ] 核对 Lecture 04 精确章节结构；如教师要求自动提醒，确认 alarm 语义
-- [ ] 填写组员姓名、职责、共同商定的贡献比例
-- [ ] 使用官方 Honour Declaration，如实声明 AI 辅助并由组员签署
-- [ ] 录制不超过 5 分钟的真人汇报，每人至少 1 分钟且满足露脸/学生证要求
-- [ ] 团队复核代码与文档，填写真实 review_status 后生成最终 ZIP
-- [x] 推送后核验 GitHub Actions 托管 CI（运行 `35303259313`，Python 3.9/3.11/3.12 均成功）
+1. Verified that every shipped source file (`.py` under `model`, `cli`, `controller`, `storage`, `view`, `tests`, and `tools`) was already pure English: the translation had been completed earlier in commit `2d2d594` ("Use English CLI messages and help placeholders"), so no source file needed changing.
+2. The only remaining Chinese lived in stale generated artifacts, which were regenerated rather than hand-edited:
+   - `output/demo/session.json` — re-captured with `tools/demo_session.py` from the current English `main.py`.
+   - `output/demo/system_demo.mp4` — installed Pillow into an isolated managed virtual environment, rendered frames with `tools/render_demo_frames.py`, and encoded with `tools/encode_demo.swift`; the result is a 124-second, 1600×1000 all-English MP4.
+   - Deleted 22 stale `.cover` trace files under the source directories and the `.coverage/` cache (Git-ignored and regenerable).
+3. Pitfall: `encode_demo.swift` fails with AVFoundation "Cannot Save (-11823)" when writing directly to an existing path; encoding to a temporary path first and then moving it over works.
+4. Confirmed that the project description's "Java/Python standard libraries only" clause applies to the implementation: `model`, `controller`, `cli`, `storage`, `view`, and `main.py` use only the Python standard library. The two non-Python tool scripts (`tools/build_slides.mjs` for the PPTX, `tools/encode_demo.swift` for the MP4) are build/presentation tooling that is deliberately excluded from both the archive whitelist and the submission archive; the four packaged tool scripts use only the standard library.
+5. Added bilingual documentation: `README.md` (English, default) with `README.zh-CN.md`, and `deploy_readme.md` (English) with `deploy_readme.zh-CN.md`. Each file links to its counterpart so the language can be switched on GitHub.
+6. Pushed commit `7f9745c` ("Regenerate demo transcript and video in English") to `origin/main` and verified that the local and remote HEADs match.
+
+## Final submission checklist
+
+- [x] Full test pass on Python 3.9.6 / 3.12.14 with a real line-coverage report generated
+- [x] SRS, current design/API, user/developer manuals, and the requirements-coverage table provided as PDFs
+- [x] 6-page presentation PPTX/PDF and the 124-second system demo MP4
+- [x] English-only source and demo artifacts; bilingual README and implementation log
+- [ ] Check the exact Lecture 04 section structure; confirm the alarm semantics if the instructor requires automatic reminders
+- [ ] Fill in member names, roles, and the jointly agreed contribution shares
+- [ ] Use the official Honour Declaration to declare AI assistance truthfully, signed by all members
+- [ ] Record a presenters-on-camera report of no more than 5 minutes, each member speaking at least 1 minute and meeting the on-camera/student-card requirement
+- [ ] Have the team review code and documents, fill in the real `review_status`, and build the final ZIP
+- [x] Verify the hosted GitHub Actions CI after pushing (run `35303259313`, Python 3.9/3.11/3.12 all succeeded)
