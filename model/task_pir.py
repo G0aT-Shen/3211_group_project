@@ -18,6 +18,10 @@ class TaskPIR(PIR):
             raise ValidationError("任务必须提供 deadline")
         self.description = description
         self.deadline = parse_datetime(deadline)
+        self._freeze()
+
+    def get_description(self) -> str:
+        return self.description
 
     def get_deadline(self) -> datetime:
         return self.deadline

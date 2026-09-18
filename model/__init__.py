@@ -11,5 +11,7 @@ from .exceptions import (
 from .pir import PIR, format_datetime, parse_datetime
 from .task_pir import TaskPIR
 from .text_pir import TextPIR
+from .factory import PIRFactory
+from .manager import PIMManager
 
-__all__ = ["PIR", "TextPIR", "TaskPIR", "EventPIR", "ContactPIR", "PIMException", "InvalidCommandError", "SearchParseError", "PIRNotFoundError", "ValidationError", "StorageError", "parse_datetime", "format_datetime"]
+__all__ = ["PIR", "TextPIR", "TaskPIR", "EventPIR", "ContactPIR", "PIMManager", "PIRFactory", "PIMException", "InvalidCommandError", "SearchParseError", "PIRNotFoundError", "ValidationError", "StorageError", "parse_datetime", "format_datetime"]

@@ -7,6 +7,7 @@ from model.exceptions import PIRNotFoundError
 
 class ControllerTests(unittest.TestCase):
     def test_crud_and_monotonic_ids(self):
+        """US6/9: edits persist and deleted IDs are never reissued."""
         manager = PIMManager()
         first = manager.add_pir(PIRFactory.create("text", {"text": "one"}))
         second = manager.add_pir(PIRFactory.create("contact", {"name": "A", "address": "B", "mobile": "1"}))
@@ -18,10 +19,12 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(third.get_id(), 3)
 
     def test_missing_record_raises(self):
+        """A nonexistent positive ID raises PIRNotFoundError."""
         with self.assertRaises(PIRNotFoundError):
             PIMManager().get_pir(99)
 
     def test_search(self):
+        """US7: case-insensitive text search selects the matching record."""
         manager = PIMManager()
         manager.add_pir(PIRFactory.create("text", {"text": "one"}))
         results = manager.search(SearchParser().parse('text contains "ONE"'))

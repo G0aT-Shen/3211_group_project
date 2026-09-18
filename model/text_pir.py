@@ -14,6 +14,7 @@ class TextPIR(PIR):
         if not isinstance(text, str) or not text.strip():
             raise ValidationError("文本内容不能为空")
         self.text = text
+        self._freeze()
 
     def get_text(self) -> str:
         return self.text

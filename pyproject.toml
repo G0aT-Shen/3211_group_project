@@ -1,5 +1,5 @@
 [project]
 name = "comp3211-pim"
-version = "0.1.0"
+version = "0.2.0"
 description = "Standard-library command-line personal information management system"
 requires-python = ">=3.9"

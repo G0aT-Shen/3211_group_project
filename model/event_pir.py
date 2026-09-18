@@ -19,6 +19,10 @@ class EventPIR(PIR):
         self.description = description
         self.start_time = parse_datetime(start_time)
         self.alarm = parse_datetime(alarm)
+        self._freeze()
+
+    def get_description(self) -> str:
+        return self.description
 
     def get_start_time(self) -> datetime:
         return self.start_time

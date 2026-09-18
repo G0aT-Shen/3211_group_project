@@ -1,0 +1,113 @@
+{
+  "provenance": "stdout/stderr captured from the real main.py process via PTY; captions/pacing added for readability",
+  "python": "3.9.6",
+  "segments": [
+    {
+      "caption": "Real application execution: COMP3211 PIM",
+      "output": "PIM 已启动。输入 help 查看命令，输入 exit 退出。\npim> ",
+      "seconds": 5
+    },
+    {
+      "caption": "Four record types",
+      "command": "add text \"Buy milk and coffee\"",
+      "output": "add text \"Buy milk and coffee\"\n已创建 PIR #1\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Tasks have descriptions and deadlines",
+      "command": "add task \"Submit report\" --deadline 2026-11-19 20:00",
+      "output": "add task \"Submit report\" --deadline 2026-11-19 20:00\n已创建 PIR #2\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Events retain start and alarm timestamps",
+      "command": "add event \"Team meeting\" --start 2026-10-12 09:00 --alarm 2026-10-12 08:30",
+      "output": "add event \"Team meeting\" --start 2026-10-12 09:00 --alarm 2026-10-12 08:30\n已创建 PIR #3\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Contacts preserve text and leading zeroes",
+      "command": "add contact --name Alice --address \"Hong Kong\" --mobile \"+852 01234567\"",
+      "output": "add contact --name Alice --address \"Hong Kong\" --mobile \"+852 01234567\"\n已创建 PIR #4\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "All records show their ID, type and fields",
+      "command": "print all",
+      "output": "print all\n#1 [text] Buy milk and coffee\n#2 [task] Submit report (deadline: 2026-11-19 20:00)\n#3 [event] Team meeting (start: 2026-10-12 09:00, alarm: 2026-10-12 08:30)\n#4 [contact] Alice (address: Hong Kong, mobile: +852 01234567)\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Compound search: type, date and negation",
+      "command": "search type = task && deadline < 2027-01-01 && !description contains \"cancelled\"",
+      "output": "search type = task && deadline < 2027-01-01 && !description contains \"cancelled\"\n#2 [task] Submit report (deadline: 2026-11-19 20:00)\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Quoted multiword search",
+      "command": "search text contains \"milk and coffee\"",
+      "output": "search text contains \"milk and coffee\"\n#1 [text] Buy milk and coffee\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Edit the selected record",
+      "command": "edit 2 --deadline 2026-11-20 12:00",
+      "output": "edit 2 --deadline 2026-11-20 12:00\n已更新 PIR #2\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "The deadline is updated",
+      "command": "print 2",
+      "output": "print 2\n#2 [task] Submit report (deadline: 2026-11-20 12:00)\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Invalid IDs produce a friendly error",
+      "command": "print abc",
+      "output": "print abc\n错误：ID 必须是正整数（最多 100 位）\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Unknown fields cannot silently change data",
+      "command": "edit 2 --unknown typo",
+      "output": "edit 2 --unknown typo\n错误：未知字段：unknown\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Save a validated snapshot",
+      "command": "save demo.pim",
+      "output": "save demo.pim\n已保存到 demo.pim\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Delete only the selected record",
+      "command": "delete 1",
+      "output": "delete 1\n已删除 PIR #1\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Confirm before replacing unsaved changes",
+      "command": "load demo.pim",
+      "output": "load demo.pim\n加载会替换未保存修改，继续？ [y/N] ",
+      "seconds": 7
+    },
+    {
+      "caption": "Load the previous snapshot",
+      "command": "y",
+      "output": "y\n已加载 4 条记录\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "The deleted note has been restored",
+      "command": "print all",
+      "output": "print all\n#1 [text] Buy milk and coffee\n#2 [task] Submit report (deadline: 2026-11-20 12:00)\n#3 [event] Team meeting (start: 2026-10-12 09:00, alarm: 2026-10-12 08:30)\n#4 [contact] Alice (address: Hong Kong, mobile: +852 01234567)\npim> ",
+      "seconds": 7
+    },
+    {
+      "caption": "Clean exit after loading",
+      "command": "exit",
+      "output": "exit\n再见。\n",
+      "seconds": 7
+    }
+  ]
+}

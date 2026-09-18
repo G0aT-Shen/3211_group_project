@@ -75,3 +75,8 @@ __pycache__/
 *.cover
 .coverage/
 .workbuddy/
+tmp/
+.codex-finalizer/
+node_modules/
+submission/
+submission_inputs/

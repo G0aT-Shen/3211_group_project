@@ -15,6 +15,7 @@ class ContactPIR(PIR):
             if not isinstance(value, str) or not value.strip():
                 raise ValidationError(f"联系人{label}不能为空")
         self.name, self.address, self.mobile = name, address, mobile
+        self._freeze()
 
     def get_name(self) -> str:
         return self.name

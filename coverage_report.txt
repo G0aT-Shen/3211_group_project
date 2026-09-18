@@ -1,73 +1,19 @@
-lines   cov%   module   (path)
-   51   100%   __future__   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/__future__.py)
-    5   100%   _bootlocale   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/_bootlocale.py)
-   11   100%   _collections_abc   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/_collections_abc.py)
-  212   100%   _strptime   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/_strptime.py)
-    7   100%   abc   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/abc.py)
-  354   100%   argparse   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/argparse.py)
-    9   100%   bisect   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/bisect.py)
-  130   100%   calendar   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/calendar.py)
-    4   100%   cli.__init__   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/cli/__init__.py)
-   16   100%   cli.command_parser   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/cli/command_parser.py)
-   12   100%   cli.repl   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/cli/repl.py)
-  108   100%   cli.search_parser   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/cli/search_parser.py)
-    9   100%   codecs   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/codecs.py)
-   69   100%   collections.__init__   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/collections/__init__.py)
-   15   100%   contextlib   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py)
-    2   100%   controller.__init__   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/controller/__init__.py)
-   70   100%   controller.pim_manager   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/controller/pim_manager.py)
-   62   100%   copy   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/copy.py)
-  302   100%   dataclasses   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/dataclasses.py)
-  423   100%   datetime   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/datetime.py)
-   52   100%   enum   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/enum.py)
-   45   100%   fnmatch   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/fnmatch.py)
-   17   100%   functools   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/functools.py)
-   30   100%   genericpath   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/genericpath.py)
-   69   100%   gettext   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/gettext.py)
-  179   100%   inspect   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/inspect.py)
-   41   100%   json.__init__   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/json/__init__.py)
-   67   100%   json.decoder   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/json/decoder.py)
-  162   100%   json.encoder   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/json/encoder.py)
-   10   100%   json.scanner   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/json/scanner.py)
-   26   100%   locale   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/locale.py)
-    7   100%   model.__init__   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/model/__init__.py)
-   18   100%   model.contact_pir   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/model/contact_pir.py)
-   19   100%   model.event_pir   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/model/event_pir.py)
-   13   100%   model.exceptions   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/model/exceptions.py)
-   35   100%   model.pir   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/model/pir.py)
-   18   100%   model.task_pir   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/model/task_pir.py)
-   16   100%   model.text_pir   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/model/text_pir.py)
-   51   100%   ntpath   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ntpath.py)
-   11   100%   os   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/os.py)
-  328   100%   pathlib   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py)
-   92   100%   posixpath   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/posixpath.py)
-  108   100%   random   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/random.py)
-   24   100%   re   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/re.py)
-   27   100%   shlex   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/shlex.py)
-   44   100%   shutil   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/shutil.py)
-  300   100%   sre_compile   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/sre_compile.py)
-  377   100%   sre_parse   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/sre_parse.py)
-    2   100%   storage.__init__   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/storage/__init__.py)
-   21   100%   storage.storage   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/storage/storage.py)
-  201   100%   tempfile   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/tempfile.py)
-   24   100%   tests.test_controller   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/tests/test_controller.py)
-   21   100%   tests.test_model   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/tests/test_model.py)
-   20   100%   tests.test_search_parser   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/tests/test_search_parser.py)
-   23   100%   tests.test_storage   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/tests/test_storage.py)
-    6   100%   traceback   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/traceback.py)
-    3   100%   types   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/types.py)
-   10   100%   unittest.__main__   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/__main__.py)
-  143   100%   unittest.case   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/case.py)
-  108   100%   unittest.loader   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/loader.py)
-  102   100%   unittest.main   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/main.py)
-   28   100%   unittest.result   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/result.py)
-   79   100%   unittest.runner   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/runner.py)
-    1   100%   unittest.signals   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/signals.py)
-  101   100%   unittest.suite   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/suite.py)
-    1   100%   unittest.util   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/util.py)
-    1   100%   urllib.__init__   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/__init__.py)
-  165   100%   urllib.parse   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/parse.py)
-    2   100%   view.__init__   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/view/__init__.py)
-    8   100%   view.printer   (/Users/hanyangshen/Desktop/大三上/3211软件工程/3211_group_project/view/printer.py)
-   40   100%   warnings   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/warnings.py)
-   18   100%   weakref   (/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/weakref.py)
+Model line coverage (stdlib trace; includes unexecuted executable lines)
+Python 3.9.6
+Tests: 54, failures: 0, errors: 0
+Scope: every .py file in model/. CLI/controller/storage/view/tests are excluded from denominator.
+Definition: executed executable lines / all executable lines identified by trace.
+No branch-coverage claim. Abstract method and protocol declaration lines remain in denominator.
+
+File                              Executed  Executable  Coverage
+model/__init__.py                      9           9   100.00%
+model/contact_pir.py                  23          23   100.00%
+model/event_pir.py                    27          27   100.00%
+model/exceptions.py                   13          13   100.00%
+model/factory.py                      47          47   100.00%
+model/manager.py                      73          74    98.65%
+model/pir.py                          57          58    98.28%
+model/search.py                      120         120   100.00%
+model/task_pir.py                     24          24   100.00%
+model/text_pir.py                     18          18   100.00%
+TOTAL                                411         413    99.52%
