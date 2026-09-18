@@ -15,7 +15,7 @@ HELP = """Commands:
   add contact --name "name" --address "address" --mobile "+852 61234567"
   edit <id> --text "text" (or other fields for that type; multiple fields allowed)
   search text contains "buy milk"
-  search type = task && deadline < 2026-12-01
+  search type = task && deadline < YYYY-MM-DD
   print [id|all]     delete <id>
   save [file.pim]    load <file.pim>
   help              exit / quit
