@@ -16,11 +16,30 @@ def run_tests():
     return unittest.TextTestRunner(verbosity=1).run(suite)
 
 
+def coverage_counts(source: Path, report: Path) -> tuple[int, int]:
+    """Count a trace report, treating an omitted source file as entirely missed."""
+    if report.exists():
+        covered = missing = 0
+        for line in report.read_text(encoding='utf-8').splitlines():
+            if re.match(r'\s*\d+:', line):
+                covered += 1
+            elif line.startswith('>>>>>>'):
+                missing += 1
+        return covered, covered + missing
+    executable = trace._find_executable_linenos(str(source))
+    source_lines = source.read_text(encoding='utf-8').splitlines()
+    total = sum(1 for number in executable
+                if number <= len(source_lines) and trace.PRAGMA_NOCOVER not in source_lines[number - 1])
+    return 0, total
+
+
 def main():
     tracer = trace.Trace(count=True, trace=False, ignoredirs=[sys.base_prefix, sys.prefix])
     result = tracer.runfunc(run_tests)
     folder = ROOT / '.coverage'
     folder.mkdir(exist_ok=True)
+    for stale in folder.glob('model.*.cover'):
+        stale.unlink()
     # show_missing=True is essential: without it trace reports only executed lines.
     with contextlib.redirect_stdout(io.StringIO()):
         tracer.results().write_results(show_missing=True, summary=True, coverdir=str(folder))
@@ -33,15 +52,7 @@ def main():
     totals = [0, 0]
     for source in sorted((ROOT / 'model').glob('*.py')):
         report = folder / ('model.' + source.stem + '.cover')
-        if not report.exists():
-            raise RuntimeError(f'Missing coverage for {source.name}')
-        covered = missing = 0
-        for line in report.read_text(encoding='utf-8').splitlines():
-            if re.match(r'\s*\d+:', line):
-                covered += 1
-            elif line.startswith('>>>>>>'):
-                missing += 1
-        total = covered + missing
+        covered, total = coverage_counts(source, report)
         totals[0] += covered
         totals[1] += total
         lines.append(f'model/{source.name:<27} {covered:>6} {total:>11} {100 * covered / total if total else 100:>8.2f}%')

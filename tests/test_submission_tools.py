@@ -9,6 +9,10 @@ import unittest
 SPEC = importlib.util.spec_from_file_location('submission_check', Path(__file__).resolve().parents[1] / 'tools/check_submission.py')
 checker = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(checker)
+_COVERAGE_SPEC = importlib.util.spec_from_file_location(
+    'coverage_check', Path(__file__).resolve().parents[1] / 'tools/check_coverage.py')
+coverage_checker = importlib.util.module_from_spec(_COVERAGE_SPEC)
+_COVERAGE_SPEC.loader.exec_module(coverage_checker)
 
 
 def mp4(seconds):
@@ -18,6 +22,16 @@ def mp4(seconds):
 
 
 class SubmissionTests(unittest.TestCase):
+    def test_coverage_counts_unreported_source_as_missed(self):
+        """A trace version that omits a .cover file must not crash the report."""
+        with tempfile.TemporaryDirectory() as folder:
+            source = Path(folder) / '__init__.py'
+            source.write_text('VALUE = 1\n', encoding='utf-8')
+            covered, total = coverage_checker.coverage_counts(
+                source, Path(folder) / 'missing.cover')
+            self.assertEqual(covered, 0)
+            self.assertGreater(total, 0)
+
     def test_missing_files_and_pending_human_approvals_fail(self):
         """An empty submission never passes merely because code tests passed."""
         with tempfile.TemporaryDirectory() as folder:

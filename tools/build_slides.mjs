@@ -61,7 +61,7 @@ text(s,'Failed validation preserves the original record.',64,595,1140,50,30,true
 s=slide('A lesson from boundary testing','Explain actual defects: 12 tests originally passed but print abc crashed, unknown edit reported success, quotes were lost. New tests prove boundary behavior. Old trace summary omitted missed lines; corrected coverage includes all model executable lines. Mention no score or correctness guarantee.');
 text(s,'Passing tests can leave interface defects undiscovered',64,178,1150,90,34,true);
 text(s,'Regression cases now cover invalid IDs, quoted searches,\nfailed edits and failed disk replacement.',64,309,1160,110,30);
-text(s,'54 tests passed on Python 3.9.6 and 3.12.14.\nModel line coverage: 411 / 413 = 99.52%.',64,463,1160,105,32);
+text(s,'55 tests passed on Python 3.9.6 and 3.12.14.\nModel line coverage: 411 / 413 = 99.52%.',64,463,1160,105,32);
 text(s,'Coverage measures execution, not a guarantee of correctness.',64,614,1150,46,25,false,'#596F7F');
 const candidate=path.join(build,'candidate.pptx');
 await (await PresentationFile.exportPptx(p)).save(candidate);
