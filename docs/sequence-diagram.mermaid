@@ -1,0 +1,36 @@
+sequenceDiagram
+    actor U as 用户
+    participant R as Repl
+    participant CP as CommandParser
+    participant F as PIRFactory
+    participant M as PIMManager
+    participant S as Storage
+    participant P as Printer
+
+    U->>R: 启动：python main.py
+    R->>R: run() 进入 REPL 循环
+    U->>R: add task "提交报告" --deadline 2026-11-19 20:00
+    R->>CP: parse(line)
+    CP-->>R: Command(name=add, type=task, options=...)
+    R->>F: create("task", fields)
+    F-->>R: TaskPIR(id=None, ...)
+    R->>M: add_pir(taskPir)
+    M->>M: 分配 id = next_id++
+    M-->>R: 新 PIR(#1)
+    R->>P: print_msg("已创建 PIR #1")
+    P-->>U: 输出结果
+
+    U->>R: save mypim.pim
+    R->>M: to_dict()
+    M-->>R: {schema_version, next_id, pirs:[...]}
+    R->>S: save("mypim.pim", manager)
+    S->>S: json.dump(...)
+    S-->>R: ok
+    R->>P: print_msg("已保存")
+
+    U->>R: load mypim.pim
+    R->>S: load("mypim.pim")
+    S->>S: json.load(...) + PIRFactory.from_dict
+    S-->>R: PIMManager(恢复)
+    R->>M: 替换内存中的 manager
+    R->>P: print_msg("已加载 N 条记录")

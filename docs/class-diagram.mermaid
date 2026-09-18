@@ -1,0 +1,139 @@
+classDiagram
+    class PIR {
+        <<abstract>>
+        -int id
+        -str type_name
+        +get_id() int
+        +get_type() str
+        +to_dict() dict
+        +from_dict(dict) PIR$
+        +get_fields() dict
+        +__str__() str
+    }
+
+    class TextPIR {
+        -str text
+        +TextPIR(int id, str text)
+        +get_text() str
+    }
+    class TaskPIR {
+        -str description
+        -datetime deadline
+        +TaskPIR(int id, str description, datetime deadline)
+        +get_deadline() datetime
+    }
+    class EventPIR {
+        -str description
+        -datetime start_time
+        -datetime alarm
+        +EventPIR(int id, str description, datetime start_time, datetime alarm)
+        +get_start_time() datetime
+        +get_alarm() datetime
+    }
+    class ContactPIR {
+        -str name
+        -str address
+        -str mobile
+        +ContactPIR(int id, str name, str address, str mobile)
+        +get_name() str
+        +get_address() str
+        +get_mobile() str
+    }
+
+    PIR <|-- TextPIR
+    PIR <|-- TaskPIR
+    PIR <|-- EventPIR
+    PIR <|-- ContactPIR
+
+    class PIMManager {
+        -dict pirs
+        -int next_id
+        +add_pir(PIR) PIR
+        +get_pir(int) PIR
+        +edit_pir(int, str, str) PIR
+        +delete_pir(int) bool
+        +list_all() list
+        +search(SearchNode) list
+        +to_dict() dict
+        +from_dict(dict) PIMManager$
+    }
+    class PIRFactory {
+        +create(str type, dict fields) PIR$
+        +from_dict(dict) PIR$
+    }
+    class Storage {
+        +save(str path, PIMManager) void$
+        +load(str path) PIMManager$
+    }
+
+    class SearchNode {
+        <<abstract>>
+        +evaluate(PIR) bool
+    }
+    class ComparisonNode {
+        -str field
+        -str op
+        -str value
+        +evaluate(PIR) bool
+    }
+    class LogicNode {
+        -str op
+        -list children
+        +evaluate(PIR) bool
+    }
+    SearchNode <|-- ComparisonNode
+    SearchNode <|-- LogicNode
+
+    class SearchParser {
+        +parse(str expr) SearchNode
+        +tokenize(str expr) list
+    }
+    class CommandParser {
+        +parse(str line) Command
+    }
+    class Command {
+        +str name
+        +list args
+        +dict options
+    }
+    class Repl {
+        -PIMManager manager
+        -Storage storage
+        -CommandParser parser
+        -SearchParser search_parser
+        +run() void
+        +execute(Command) void
+    }
+    class Printer {
+        +print_pir(PIR) void$
+        +print_all(list) void$
+        +print_msg(str) void$
+        +print_error(PIMException) void$
+    }
+
+    class PIMException {
+        <<abstract>>
+    }
+    class InvalidCommandError
+    class SearchParseError
+    class PIRNotFoundError
+    class ValidationError
+    class StorageError
+
+    PIMException <|-- InvalidCommandError
+    PIMException <|-- SearchParseError
+    PIMException <|-- PIRNotFoundError
+    PIMException <|-- ValidationError
+    PIMException <|-- StorageError
+
+    PIMManager *-- PIR : 持有 0..*
+    PIMManager ..> PIRFactory : 使用
+    PIMManager ..> SearchNode : 求值
+    Storage ..> PIRFactory : 反序列化
+    Repl ..> CommandParser : 使用
+    Repl ..> SearchParser : 使用
+    Repl ..> PIMManager : 使用
+    Repl ..> Storage : 使用
+    Repl ..> Printer : 使用
+    SearchParser ..> SearchNode : 构造
+    CommandParser ..> Command : 构造

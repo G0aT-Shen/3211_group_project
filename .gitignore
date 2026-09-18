@@ -67,3 +67,11 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Python project files
+__pycache__/
+*.py[cod]
+*.pim
+*.cover
+.coverage/
+.workbuddy/
