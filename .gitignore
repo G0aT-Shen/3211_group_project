@@ -1,82 +1,46 @@
-# Prerequisites
-*.d
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-*.so.*
-
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# Build directories
+# Python environments and packaging artifacts
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
 build/
-Build/
-build-*/
 
-# CMake generated files
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-install_manifest.txt
-compile_commands.json
+# Test, coverage, and type-checker output
+.coverage
+.coverage.*
+*.cover
+htmlcov/
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
 
-# Temporary files
+# Project-generated temporary and local submission material
+tmp/
+submission/
+submission_inputs/
+.workbuddy/
+.codex-finalizer/
+*.pim
+node_modules/
+
+# IDE and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Generic temporary files
 *.tmp
 *.log
 *.bak
 *.swp
-
-# vcpkg
-vcpkg_installed/
-
-# debug information files
-*.dwo
-
-# test output & cache
-Testing/
-.cache/
-
-# Python project files
-__pycache__/
-*.py[cod]
-*.pim
-*.cover
-.coverage/
-.workbuddy/
-tmp/
-.codex-finalizer/
-node_modules/
-submission/
-submission_inputs/
