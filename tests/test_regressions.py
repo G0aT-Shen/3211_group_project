@@ -19,8 +19,8 @@ class RegressionTests(unittest.TestCase):
         output = io.StringIO()
         with patch('builtins.input', side_effect=['print abc', 'delete abc', 'delete', 'exit']), contextlib.redirect_stdout(output):
             repl.run()
-        self.assertEqual(output.getvalue().count('错误'), 3)
-        self.assertIn('再见', output.getvalue())
+        self.assertEqual(output.getvalue().count('Error:'), 3)
+        self.assertIn('Goodbye.', output.getvalue())
 
     def test_unknown_edit_field_is_rejected_atomically(self):
         """A typo must raise ValidationError and preserve the existing note."""

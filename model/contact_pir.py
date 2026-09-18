@@ -11,9 +11,9 @@ class ContactPIR(PIR):
 
     def __init__(self, record_id: int | None = None, name: str = "", address: str = "", mobile: str = "") -> None:
         super().__init__(record_id)
-        for label, value in (("姓名", name), ("地址", address), ("手机号", mobile)):
+        for label, value in (("name", name), ("address", address), ("mobile", mobile)):
             if not isinstance(value, str) or not value.strip():
-                raise ValidationError(f"联系人{label}不能为空")
+                raise ValidationError(f"Contact {label} cannot be blank")
         self.name, self.address, self.mobile = name, address, mobile
         self._freeze()
 

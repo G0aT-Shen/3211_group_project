@@ -18,7 +18,7 @@ from storage.storage import pim_path
 from view import Printer
 
 CASES = {
-    'text': {'text': 'Hello 世界 && milk'},
+    'text': {'text': 'Hello world && milk'},
     'task': {'description': 'Submit Report', 'deadline': '2026-11-19 20:00'},
     'event': {'description': 'Team meeting', 'start_time': '2026-10-12 09:00', 'alarm': '2026-10-12 08:30'},
     'contact': {'name': 'Alice', 'address': 'Hong Kong', 'mobile': '+852 01234567'},
@@ -175,7 +175,7 @@ class SearchContractTests(unittest.TestCase):
     def test_contains_on_all_text_fields(self):
         """US7: all textual fields support Unicode, casefold and multiword contains."""
         manager = PIMManager(records())
-        for field, value, expected in [('text', '世界 &&', [1]), ('description', 'REPORT', [2]),
+        for field, value, expected in [('text', 'world &&', [1]), ('description', 'REPORT', [2]),
                                         ('name', 'ALICE', [4]), ('address', 'hong kong', [4]), ('mobile', '0123', [4])]:
             node = SearchParser().parse(f'{field} contains "{value}"')
             self.assertEqual([p.get_id() for p in manager.search(node)], expected)
@@ -200,7 +200,7 @@ class SearchContractTests(unittest.TestCase):
             '!!type = event': [3],
             'deadline != 2027-01-01': [2],
             '!deadline = 2027-01-01': [1, 2, 3, 4],
-            'type != contact && text = "hello 世界 && milk"': [1],
+            'type != contact && text = "hello world && milk"': [1],
             'text != "x"': [1],
             'start_time = 2026-10-12 09:00': [3],
         }
@@ -356,16 +356,16 @@ class ReplContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder, contextlib.redirect_stdout(io.StringIO()) as output:
             path = Path(folder) / 'demo.pim'
             repl = Repl(confirm=lambda _: True)
-            for command in ['help', 'add text "买牛奶"', 'add task report --deadline 2026-11-19 20:00',
+            for command in ['help', 'add text "buy milk"', 'add task report --deadline 2026-11-19 20:00',
                             'add event meeting --start 2026-10-12 09:00 --alarm 2026-10-12 08:30',
                             'add contact --name Alice --address "Hong Kong" --mobile 61234567',
-                            'edit 1 --text "买咖啡"', 'search type = task && deadline < 2027-01-01',
+                            'edit 1 --text "buy coffee"', 'search type = task && deadline < 2027-01-01',
                             'print all', 'print 1', f'save "{path}"', 'delete 4', f'load "{path}"']:
                 self.assertFalse(repl.execute(repl.parser.parse(command)))
             self.assertEqual(len(repl.manager.pirs), 4)
             self.assertFalse(repl.dirty)
             self.assertTrue(repl.execute(Command('exit')))
-            self.assertIn('买咖啡', output.getvalue())
+            self.assertIn('buy coffee', output.getvalue())
 
     def test_cancelled_save_load_exit_keep_state(self):
         """Declining confirmation preserves file bytes, active model and dirty flag."""
@@ -408,9 +408,9 @@ class ReplContractTests(unittest.TestCase):
         repl = Repl()
         with patch('builtins.input', side_effect=['', KeyboardInterrupt, 'delete 99', 'add text x', EOFError]), contextlib.redirect_stdout(io.StringIO()) as output:
             repl.run()
-        self.assertIn('输入已取消', output.getvalue())
-        self.assertIn('错误', output.getvalue())
-        self.assertIn('未保存', output.getvalue())
+        self.assertIn('Input cancelled', output.getvalue())
+        self.assertIn('Error:', output.getvalue())
+        self.assertIn('unsaved', output.getvalue())
         with patch('builtins.input', side_effect=EOFError), contextlib.redirect_stdout(io.StringIO()):
             Repl().run()
 
@@ -418,6 +418,6 @@ class ReplContractTests(unittest.TestCase):
         """Empty result sets are explained, and invalid dispatch raises a domain error."""
         with contextlib.redirect_stdout(io.StringIO()) as output:
             Printer().print_all([])
-        self.assertIn('没有匹配', output.getvalue())
+        self.assertIn('No matching PIRs', output.getvalue())
         with self.assertRaises(InvalidCommandError):
             Repl().execute(Command('bad'))

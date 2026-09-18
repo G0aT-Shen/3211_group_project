@@ -12,15 +12,15 @@ MAX_FILE_BYTES = 10 * 1024 * 1024
 
 def pim_path(path: str | Path) -> Path:
     if not isinstance(path, (str, Path)) or not str(path).strip() or "\x00" in str(path):
-        raise StorageError("文件路径无效")
+        raise StorageError("Invalid file path")
     target = Path(path)
     if target.suffix.lower() != ".pim":
-        raise StorageError("文件扩展名必须为 .pim")
+        raise StorageError("File extension must be .pim")
     try:
         if target.is_symlink():
-            raise StorageError("不支持以符号链接作为 .pim 文件")
+            raise StorageError("Symlinks cannot be used as .pim files")
     except OSError as exc:
-        raise StorageError(f"无法检查文件路径 {target}: {exc}") from exc
+        raise StorageError(f"Could not inspect file path {target}: {exc}") from exc
     return target
 
 
@@ -28,13 +28,13 @@ def unique_object(pairs):
     result = {}
     for key, value in pairs:
         if key in result:
-            raise ValidationError(f"JSON 重复键：{key}")
+            raise ValidationError(f"Duplicate JSON key: {key}")
         result[key] = value
     return result
 
 
 def reject_constant(value):
-    raise ValidationError(f"JSON 不允许常量：{value}")
+    raise ValidationError(f"JSON constant is not allowed: {value}")
 
 
 class Storage:
@@ -48,7 +48,7 @@ class Storage:
             PIMManager.from_dict(data)
             payload = (json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
             if len(payload) > MAX_FILE_BYTES:
-                raise StorageError("文件超过 10 MiB 限制")
+                raise StorageError("File exceeds the 10 MiB limit")
             with tempfile.NamedTemporaryFile(mode="wb", dir=target.parent, prefix=".pim-", suffix=".tmp", delete=False) as stream:
                 temporary = Path(stream.name)
                 stream.write(payload)
@@ -57,13 +57,13 @@ class Storage:
             os.replace(temporary, target)
             temporary = None
         except (OSError, ValueError, UnicodeError, ValidationError) as exc:
-            raise StorageError(f"无法保存 {target}: {exc}") from exc
+            raise StorageError(f"Could not save {target}: {exc}") from exc
         finally:
             if temporary is not None:
                 try:
                     temporary.unlink(missing_ok=True)
                 except OSError as exc:
-                    raise StorageError(f"保存未完成，且无法清理临时文件 {temporary}: {exc}") from exc
+                    raise StorageError(f"Save incomplete and temporary file {temporary} could not be removed: {exc}") from exc
 
     @staticmethod
     def load(path: str | Path) -> PIMManager:
@@ -72,8 +72,8 @@ class Storage:
             with target.open("rb") as stream:
                 payload = stream.read(MAX_FILE_BYTES + 1)
             if len(payload) > MAX_FILE_BYTES:
-                raise StorageError("文件超过 10 MiB 限制")
+                raise StorageError("File exceeds the 10 MiB limit")
             data = json.loads(payload.decode("utf-8"), object_pairs_hook=unique_object, parse_constant=reject_constant)
             return PIMManager.from_dict(data)
         except (OSError, UnicodeError, ValueError, ValidationError, RecursionError) as exc:
-            raise StorageError(f"无法读取 .pim 文件 {target}: {exc}") from exc
+            raise StorageError(f"Could not read .pim file {target}: {exc}") from exc

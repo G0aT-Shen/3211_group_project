@@ -24,19 +24,19 @@ class ComparisonNode(SearchNode):
     def __init__(self, field: str, op: str, value: str) -> None:
         self.field, self.op = field.lower(), op.lower()
         if self.field not in TEXT_FIELDS | TIME_FIELDS:
-            raise SearchParseError(f"未知搜索字段：{field}")
+            raise SearchParseError(f"Unknown search field: {field}")
         allowed = set(OPERATORS) if self.field in TIME_FIELDS else {"contains", "=", "!="}
         if self.field == "type":
             allowed = {"=", "!="}
         if self.op not in allowed:
-            raise SearchParseError(f"字段 {field} 不支持操作符 {op}")
+            raise SearchParseError(f"Field {field} does not support operator {op}")
         self.value = value
         try:
             self.expected = parse_datetime(value) if self.field in TIME_FIELDS else value.casefold()
         except ValidationError as exc:
             raise SearchParseError(str(exc)) from exc
         if self.field == "type" and self.expected not in {"text", "task", "event", "contact"}:
-            raise SearchParseError(f"未知 PIR 类型：{value}")
+            raise SearchParseError(f"Unknown PIR type: {value}")
 
     def evaluate(self, pir: PIR) -> bool:
         key = "start_time" if self.field == "start" else self.field
@@ -56,7 +56,7 @@ class ComparisonNode(SearchNode):
 class LogicNode(SearchNode):
     def __init__(self, op: str, children: list[SearchNode]) -> None:
         if op not in {"!", "&&", "||"} or not children or (op == "!" and len(children) != 1):
-            raise SearchParseError("无效逻辑节点")
+            raise SearchParseError("Invalid logic node")
         self.op, self.children = op, tuple(children)
 
     def evaluate(self, pir: PIR) -> bool:
@@ -70,15 +70,15 @@ class LogicNode(SearchNode):
 class SearchParser:
     def tokenize(self, expression: str) -> list[str]:
         if not isinstance(expression, str) or not expression.strip():
-            raise SearchParseError("搜索表达式不能为空")
+            raise SearchParseError("Search expression cannot be empty")
         if len(expression) > 8192:
-            raise SearchParseError("搜索表达式过长（最多 8192 字符）")
+            raise SearchParseError("Search expression is too long (maximum 8192 characters)")
         tokens, pos = [], 0
         expression = expression.strip()
         while pos < len(expression):
             match = TOKEN.match(expression, pos)
             if not match:
-                raise SearchParseError(f"无效字符或未闭合引号（位置 {pos + 1}）")
+                raise SearchParseError(f"Invalid character or unterminated quote at position {pos + 1}")
             tokens.append(match.group(1))
             pos = match.end()
         return tokens
@@ -95,14 +95,14 @@ class SearchParser:
             nonlocal index
             token = peek()
             if token is None:
-                raise SearchParseError("搜索表达式不完整")
+                raise SearchParseError("Incomplete search expression")
             index += 1
             return token
 
         def condition():
             field, op, value = take(), take(), take()
             if value in {"(", ")", "!", "&&", "||"} | set(OPERATORS):
-                raise SearchParseError("缺少比较值；特殊字符须用引号包裹")
+                raise SearchParseError("Missing comparison value; quote special characters")
             if value[0] in "\"'":
                 value = shlex.split(value)[0]
             elif re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) and re.fullmatch(r"\d{2}:\d{2}", peek() or ""):
@@ -111,7 +111,7 @@ class SearchParser:
 
         def parse_not(depth):
             if depth > 64:
-                raise SearchParseError("搜索嵌套过深（最多 64 层）")
+                raise SearchParseError("Search nesting is too deep (maximum 64 levels)")
             if peek() == "!":
                 take()
                 return LogicNode("!", [parse_not(depth + 1)])
@@ -119,7 +119,7 @@ class SearchParser:
                 take()
                 node = parse_or(depth + 1)
                 if take() != ")":
-                    raise SearchParseError("缺少右括号")
+                    raise SearchParseError("Missing closing parenthesis")
                 return node
             return condition()
 
@@ -139,5 +139,5 @@ class SearchParser:
 
         node = parse_or(0)
         if peek() is not None:
-            raise SearchParseError(f"多余的搜索内容：{peek()}")
+            raise SearchParseError(f"Unexpected search content: {peek()}")
         return node

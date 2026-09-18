@@ -10,7 +10,7 @@ class Printer:
 
     def print_all(self, pirs: list[PIR]) -> None:
         if not pirs:
-            print("没有匹配的 PIR。")
+            print("No matching PIRs.")
             return
         for pir in pirs:
             self.print_pir(pir)
@@ -19,4 +19,4 @@ class Printer:
         print(message)
 
     def print_error(self, error: PIMException) -> None:
-        print(f"错误：{error}")
+        print(f"Error: {error}")

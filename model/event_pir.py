@@ -13,9 +13,9 @@ class EventPIR(PIR):
     def __init__(self, record_id: int | None = None, description: str = "", start_time: datetime | str | None = None, alarm: datetime | str | None = None) -> None:
         super().__init__(record_id)
         if not isinstance(description, str) or not description.strip():
-            raise ValidationError("事件描述不能为空")
+            raise ValidationError("Event description cannot be blank")
         if start_time is None or alarm is None:
-            raise ValidationError("事件必须提供 start 和 alarm")
+            raise ValidationError("Event requires start and alarm")
         self.description = description
         self.start_time = parse_datetime(start_time)
         self.alarm = parse_datetime(alarm)

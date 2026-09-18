@@ -12,7 +12,7 @@ class TextPIR(PIR):
     def __init__(self, record_id: int | None = None, text: str = "") -> None:
         super().__init__(record_id)
         if not isinstance(text, str) or not text.strip():
-            raise ValidationError("文本内容不能为空")
+            raise ValidationError("Text content cannot be blank")
         self.text = text
         self._freeze()
 

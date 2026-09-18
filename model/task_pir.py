@@ -13,9 +13,9 @@ class TaskPIR(PIR):
     def __init__(self, record_id: int | None = None, description: str = "", deadline: datetime | str | None = None) -> None:
         super().__init__(record_id)
         if not isinstance(description, str) or not description.strip():
-            raise ValidationError("任务描述不能为空")
+            raise ValidationError("Task description cannot be blank")
         if deadline is None:
-            raise ValidationError("任务必须提供 deadline")
+            raise ValidationError("Task requires a deadline")
         self.description = description
         self.deadline = parse_datetime(deadline)
         self._freeze()

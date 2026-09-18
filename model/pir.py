@@ -16,19 +16,19 @@ def parse_datetime(value: Any) -> datetime:
     """Parse a CLI value or ISO value into a naive datetime."""
     if isinstance(value, datetime):
         if value.tzinfo is not None or value.second or value.microsecond:
-            raise ValidationError("时间必须是无时区的本地时间，精度为分钟")
+            raise ValidationError("Time must be local, timezone-naive and precise to the minute")
         return value
     if not isinstance(value, str) or not value.strip():
-        raise ValidationError("时间必须是 YYYY-MM-DD HH:MM")
+        raise ValidationError("Time must be YYYY-MM-DD HH:MM")
     text = value.strip()
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::00)?)?", text):
-        raise ValidationError("时间格式必须为 YYYY-MM-DD HH:MM（或仅日期）")
+        raise ValidationError("Time must use YYYY-MM-DD HH:MM (or a date alone)")
     for fmt in (DATETIME_FORMAT, "%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M"):
         try:
             return datetime.strptime(text, fmt)
         except ValueError:
             continue
-    raise ValidationError(f"无效时间：{value}（格式应为 YYYY-MM-DD HH:MM）")
+    raise ValidationError(f"Invalid time: {value} (expected YYYY-MM-DD HH:MM)")
 
 
 def format_datetime(value: datetime) -> str:
@@ -42,18 +42,18 @@ class PIR(ABC):
 
     def __setattr__(self, name: str, value: Any) -> None:
         if getattr(self, "_sealed", False):
-            raise AttributeError("PIR 是不可变记录，请使用 PIMManager.edit_pir")
+            raise AttributeError("PIR records are immutable; use PIMManager.edit_pir")
         object.__setattr__(self, name, value)
 
     def _freeze(self) -> None:
         self._sealed = True
 
     def __delattr__(self, name: str) -> None:
-        raise AttributeError("PIR 字段不可删除，请使用 PIMManager.edit_pir")
+        raise AttributeError("PIR fields cannot be deleted; use PIMManager.edit_pir")
 
     def __init__(self, record_id: int | None = None) -> None:
         if record_id is not None and (not isinstance(record_id, int) or isinstance(record_id, bool) or record_id < 1):
-            raise ValidationError("ID 必须是正整数")
+            raise ValidationError("ID must be a positive integer")
         self._id = record_id
 
     def get_id(self) -> int | None:

@@ -16,12 +16,12 @@ class PIMManager:
     def __init__(self, pirs: Iterable[PIR] | None = None, next_id: int = 1) -> None:
         self._pirs: dict[int, PIR] = {}
         if type(next_id) is not int or next_id < 1:
-            raise ValidationError("next_id 必须是正整数")
+            raise ValidationError("next_id must be a positive integer")
         for pir in pirs or ():
             if not isinstance(pir, PIR) or pir.get_id() is None:
-                raise ValidationError("已有记录必须是带 ID 的 PIR")
+                raise ValidationError("Existing records must be PIRs with IDs")
             if pir.get_id() in self._pirs:
-                raise ValidationError(f"重复的 PIR ID：{pir.get_id()}")
+                raise ValidationError(f"Duplicate PIR ID: {pir.get_id()}")
             self._pirs[pir.get_id()] = pir
         self._next_id = max(next_id, max(self._pirs, default=0) + 1)
 
@@ -35,7 +35,7 @@ class PIMManager:
 
     def add_pir(self, pir: PIR) -> PIR:
         if not isinstance(pir, PIR) or pir.get_id() is not None:
-            raise ValidationError("新增记录必须是尚未分配 ID 的 PIR")
+            raise ValidationError("A new record must be a PIR without an assigned ID")
         assigned = PIRFactory.create(pir.get_type(), pir.get_fields(), self._next_id)
         self._pirs[self._next_id] = assigned
         self._next_id += 1
@@ -43,9 +43,9 @@ class PIMManager:
 
     def get_pir(self, record_id: int) -> PIR:
         if type(record_id) is not int or record_id < 1:
-            raise ValidationError("ID 必须是正整数")
+            raise ValidationError("ID must be a positive integer")
         if record_id not in self._pirs:
-            raise PIRNotFoundError(f"找不到 PIR #{record_id}")
+            raise PIRNotFoundError(f"PIR #{record_id} was not found")
         return self._pirs[record_id]
 
     def edit_pir(self, record_id: int, updates: dict[str, Any] | str, value: Any = None) -> PIR:
@@ -76,13 +76,13 @@ class PIMManager:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PIMManager:
         if not isinstance(data, dict) or set(data) != {"schema_version", "next_id", "pirs"}:
-            raise ValidationError(".pim 根节点必须包含且仅包含 schema_version、next_id、pirs")
+            raise ValidationError("The .pim root must contain exactly schema_version, next_id and pirs")
         if type(data["schema_version"]) is not int or data["schema_version"] != 1:
-            raise ValidationError("不支持的 schema_version（当前为 1）")
+            raise ValidationError("Unsupported schema_version (current version is 1)")
         if not isinstance(data["pirs"], list):
-            raise ValidationError("pirs 必须是数组")
+            raise ValidationError("pirs must be an array")
         pirs = [PIRFactory.from_dict(item) for item in data["pirs"]]
         next_id = data["next_id"]
         if type(next_id) is not int or next_id <= max((pir.get_id() for pir in pirs), default=0):
-            raise ValidationError("next_id 必须是大于所有已有 ID 的正整数")
+            raise ValidationError("next_id must be a positive integer greater than every existing ID")
         return cls(pirs, next_id)
