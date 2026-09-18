@@ -42,7 +42,8 @@
 1. 检查 GitHub Actions 运行 `35301951751` 的原始作业日志。Python 3.11 的 54 项应用测试全部通过，唯一失败发生在 `python tools/check_coverage.py`：标准库 `trace` 未为 `model/__init__.py` 生成 `.cover` 文件，旧脚本抛出 `RuntimeError: Missing coverage for __init__.py`。Python 3.12 的测试、覆盖率和 compileall 均成功；矩阵 fail-fast 取消的作业不视为测试失败。
 2. 为缺失报告增加回归测试：覆盖率工具现在将未生成 `.cover` 的源码按零命中计入可执行行分母，不再把不同 Python 版本的 `trace` 输出差异误判为程序错误。每次运行前清理旧的 `model.*.cover`，防止过期报告掩盖问题。
 3. 将 GitHub Actions 矩阵设为 `fail-fast: false`，确保一个环境失败时仍收集其他 Python 版本的独立结果；更新 `actions/checkout` 和 `actions/setup-python` 到官方 v7 主版本。
-4. 自动化测试总数更新为 55；覆盖率保持 411/413（99.52%）。同步更新 README、覆盖率文本/PDF和 6 页演示稿。新提交推送后再依据新的 Actions 运行结果更新托管 CI 状态，不提前标记通过。
+4. 自动化测试总数更新为 55；覆盖率保持 411/413（99.52%）。同步更新 README、覆盖率文本/PDF和 6 页演示稿。
+5. 提交 `954c3a2` 推送后，GitHub Actions 运行 `35303259313` 完成：Python 3.9、3.11、3.12 三个作业均成功，各自通过 55 项测试、覆盖率脚本和 compileall。托管 CI 状态据此更新。
 
 ## 后续正式提交检查清单
 
@@ -54,4 +55,4 @@
 - [ ] 使用官方 Honour Declaration，如实声明 AI 辅助并由组员签署
 - [ ] 录制不超过 5 分钟的真人汇报，每人至少 1 分钟且满足露脸/学生证要求
 - [ ] 团队复核代码与文档，填写真实 review_status 后生成最终 ZIP
-- [ ] 推送后核验 GitHub Actions 托管 CI
+- [x] 推送后核验 GitHub Actions 托管 CI（运行 `35303259313`，Python 3.9/3.11/3.12 均成功）
