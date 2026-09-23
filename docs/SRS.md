@@ -1,105 +1,164 @@
 # Software Requirements Specification
 
-COMP3211 Personal Information Management System | Version 0.2 | 18 September 2026
+COMP3211 Personal Information Management System | Version 0.2, Revision 1 | 23 September 2026
 
 ## 1. Preface
 
-Audience: course assessors, the development group and future maintainers. Source of mandatory scope: Course Project Description, Fall 2026, Appendix B (US1-US11), and Deliverables 1-4. Requirements below distinguish course functionality from team-selected interaction and quality rules. Group members, contribution percentages and approval date: TO BE FILLED BY TEAM.
+### 1.1 Purpose and readership
 
-Lecture 04 is not available in the project folder. The chapter structure below follows Preface, Introduction, Glossary, User requirements, System architecture and System requirements. The team must check the exact lecture structure before submission. System models, System evolution, Appendix and Index chapters are deliberately omitted as requested by the course description.
+This Software Requirements Specification (SRS) defines what the COMP3211 Personal Information Management (PIM) system shall provide and the constraints under which it shall operate. It is written for course assessors, users, developers, testers and future maintainers. User requirements describe the services visible to a non-technical user; system requirements refine those services into precise, testable behavior.
+
+The mandatory scope comes from the Fall 2026 Course Project Description, especially Appendix B (US1-US11), Deliverables 1-4 and the standard-library/model-package constraints. The structure follows Lecture 04, slides 31-32: Preface, Introduction, Glossary, User requirements definition, System architecture and System requirements specification. As directed by the project description, chapters for System models, System evolution, Appendices and Index are intentionally omitted.
+
+### 1.2 Version history
+
+| Version | Date | Rationale and summary of changes |
+|---|---|---|
+| 0.1 | 18 September 2026 | Established the initial scope from US1-US11 and the command-line PIM concept. |
+| 0.2 | 18 September 2026 | Added detailed functional, data, interface and quality requirements plus acceptance examples and traceability to tests. |
+| 0.2 Revision 1 | 23 September 2026 | Aligned chapter names and preface content with Lecture 04; added requirement rationale, verification methods, stakeholders, interfaces and validation criteria; corrected the documented English error prefix. |
+
+### 1.3 Requirement conventions and approval status
+
+Each requirement has a stable identifier. "Shall" denotes a mandatory requirement, "should" denotes a desirable recommendation and "may" denotes an allowed option. Rationale explains why a requirement exists; verification identifies observable evidence. Detailed backward and forward traceability is maintained in the root requirements coverage report.
+
+This revision verifies the document structure against the supplied Lecture 04 slides. Final group approval, member identities, contribution percentages and signatures belong in the official Honour Declaration and are not invented in this SRS.
 
 ## 2. Introduction
 
-The system manages personal notes, tasks, events and contacts through a local command line. A user starts one process, creates records, searches or edits them, and saves the collection for a later session. The system needs neither a network connection nor a database server. The product is for a single user and one active collection per process.
+### 2.1 Need and objectives
 
-Implementation language: Python, using only its standard library. The project supports Python 3.9 or later; verified development environments are macOS with CPython 3.9.6 and 3.12.14. Python 3.11 is a team target and CI matrix entry, not a version mandated by the course PDF. No package installation is required to run the application or tests.
+Personal notes, tasks, events and contacts are often kept in unrelated places. The PIM system provides one local collection in which a user can create, find, update, inspect, delete, save and restore these records. Its objective is to satisfy US1-US11 through a small, dependable command-line application that can be built, tested and assessed reproducibly.
 
-Scope excludes accounts, GUI, cloud synchronization, background processes and OS notification delivery. An event stores an alarm time that users can print and search. Automatic reminders are not promised by this version. This interpretation follows US4's request to create events with descriptions, starting times and alarms; obtain instructor clarification if notification delivery is expected.
+### 2.2 Product overview
+
+A user starts one process and interacts through text commands. The process maintains one active collection in memory. A user may save the entire collection to a `.pim` file and load it in a later session. The system assigns stable positive integer IDs so records can be selected for printing, editing and deletion.
+
+The product is a standalone local application. It does not integrate with accounts, cloud services, databases, calendars, messaging systems or other network services. Its external interfaces are the terminal for commands and output, and the local filesystem for `.pim` files.
+
+### 2.3 Stakeholders
+
+Primary user: a person managing their own local information. Course assessors evaluate requirements, design, implementation and tests. Developers and testers maintain the implementation and verify behavior. The project group owns final review, presentation and declaration activities.
+
+### 2.4 Scope and constraints
+
+The system includes four PIR types, field-based and compound searching, modification, printing, deletion and file persistence. Accounts, GUI, online synchronization, multi-user access, background services and OS notification delivery are outside scope. An event alarm is a stored, printable and searchable timestamp; US4 does not explicitly require the application to trigger a notification.
+
+The implementation language is Python and production code shall use only the Python standard library and project-local modules. The supported interpreter baseline is Python 3.9 or later. The application is designed for one user and one active process writing a given file at a time.
 
 ## 3. Glossary
 
-PIR: personal information record, identified by a positive integer within a saved collection.
+PIM: Personal Information Management system, the product specified by this document.
 
-PIM: personal information management system. Criterion: a Boolean expression evaluated on a PIR. AST: abstract syntax tree representing a parsed criterion. Dirty state: the active collection has been changed since its last successful save/load. Local time: a datetime without timezone metadata, interpreted consistently in the user's chosen local timezone. Schema version: the format identifier at the root of a .pim JSON document.
+PIR: Personal information record. A PIR has a type, a positive integer ID and type-specific fields.
 
-## 4. User requirements
+Criterion: A Boolean expression evaluated against a PIR during a search.
 
-UR-01 (US1-US5): Users can create notes, tasks, events and contacts with all required data and identify each saved record.
+AST: Abstract syntax tree used to represent a parsed search criterion.
 
-UR-02 (US6): Users can change any data field on a record without changing its ID or type.
+Dirty state: The active collection has changed since its most recent successful save or load.
 
-UR-03 (US7): Users can find records using types, text containment, time comparisons, logical conjunction, disjunction and negation.
+Local time: A date and time without timezone metadata, interpreted consistently in the user's local context.
 
-UR-04 (US8-US9): Users can inspect one or all records and delete a chosen record.
+Schema version: The integer format identifier stored at the root of a `.pim` document.
 
-UR-05 (US10-US11): Users can save and restore collections using .pim files.
+Atomic operation: An operation that either completes fully or leaves the previously valid state unchanged.
 
-UR-06 (team quality rule): Invalid commands explain the problem and leave the process usable. Failed edits and failed file operations preserve the previously valid data.
+## 4. User Requirements Definition
 
-## 5. System architecture
+The following requirements use user-facing language and identify their source and rationale. Together they cover every story in Appendix B.
 
-MVC with explicit persistence adapter. The independent model package owns PIR classes, factory/schema validation, collection state/IDs and search criteria. The CLI adapter parses command syntax and dispatches operations. The view formats output. Storage translates validated model snapshots to/from UTF-8 JSON. Main creates the REPL. The model imports no CLI, storage or view modules and performs no input/output.
+UR-01 (US1-US5): The user shall be able to create plain-text notes, tasks with descriptions and deadlines, events with descriptions, starting times and alarms, and contacts with names, addresses and mobile numbers. Each created PIR shall be identifiable. Rationale: the four record types must be managed in one location. Verification: create and print one record of every type.
 
-The controller package is a compatibility facade exporting the model manager/factory. The CLI Repl provides the active controller behavior. This arrangement preserves early project imports while keeping all business rules in model for unit testing. No third-party runtime dependencies are permitted.
+UR-02 (US6): The user shall be able to change the data fields of an existing PIR without changing its ID or type. Rationale: stored information must remain current while references to the record remain stable. Verification: edit every supported field and print the same ID.
 
-## 6. System requirements
+UR-03 (US7): The user shall be able to search by PIR type and field data, including text containment, time comparison and compound conditions using AND, OR and NOT. Rationale: a mixed collection is useful only when relevant records can be found precisely. Verification: execute simple and compound searches and compare the returned IDs with the expected set.
+
+UR-04 (US8-US9): The user shall be able to inspect one PIR or all PIRs and delete a selected PIR. Rationale: users need both visibility and control over their collection. Verification: print one/all records, delete one ID and confirm that other records remain.
+
+UR-05 (US10-US11): The user shall be able to save the active collection to a `.pim` file and restore it in a later session. Rationale: information must survive process termination. Verification: save, restart, load and compare IDs, types and all field values.
+
+UR-06 (project quality rule): Invalid commands or data shall produce an understandable error and leave the application usable. A failed edit, save or load shall preserve the last valid state. Rationale: routine input and file errors must not silently lose or corrupt personal information. Verification: submit malformed commands, invalid dates and damaged files, then perform a valid command and inspect the preserved state.
+
+### 4.1 User-level quality expectations
+
+The application shall run locally without a network connection or third-party runtime package. Commands and output shall be documented in a user manual. Destructive replacement of a file or unsaved collection shall require explicit confirmation. The system should give deterministic results for the same collection and criterion.
+
+## 5. System Architecture
+
+The anticipated architecture is Model-View-Controller (MVC) with an explicit persistence adapter. It separates business rules from terminal interaction and file IO so the model can be unit-tested independently, as required by the project description.
+
+| Component | Responsibility | Dependency and reuse boundary |
+|---|---|---|
+| `main.py` | Construct and start the command loop. | Depends on the CLI adapter only. |
+| `model` | Own PIR types, field validation, IDs, collection state and search criteria. | Depends only on Python standard-library modules; performs no console or file IO. |
+| `cli` / `Repl` | Parse commands, coordinate model/storage/view operations and confirmations. | Depends on model, storage and view. It acts as the active controller adapter. |
+| `controller` | Preserve the public manager/factory import boundary. | Reuses and re-exports model services; contains no separate business state. |
+| `storage` | Translate validated model snapshots to and from strict UTF-8 JSON `.pim` files. | Depends on model and Python filesystem/JSON libraries. |
+| `view` | Format records, messages, empty results and errors for the terminal. | Depends on model display contracts only. |
+
+The reused platform components are Python's standard library for dates, regular expressions, shell-like tokenization, JSON and atomic filesystem replacement. No third-party runtime component is part of the product. Detailed class relationships and interaction diagrams belong to the separate design document rather than this SRS.
+
+## 6. System Requirements Specification
 
 ### 6.1 Functional requirements
 
-FR-01 (US1): A successful add shall return a unique positive integer ID. IDs shall increase monotonically within a collection and shall not be reused after deletion. A failed add shall not consume an ID.
+FR-01 (US1): A successful add operation shall return a unique positive integer ID. IDs shall increase monotonically within a collection and shall not be reused after deletion. A failed add shall not consume an ID. Rationale: stable IDs support later operations and persistence. Verification: add, fail an add, delete and add again while checking the allocated IDs.
 
-FR-02 (US2): add text shall require exactly one nonblank text value and preserve its content, including Unicode, spaces inside quotes and leading zeroes.
+FR-02 (US2): `add text` shall require exactly one nonblank text value and preserve its content, including Unicode, quoted spaces and leading zeroes. Rationale: note content must not be altered by parsing. Verification: round-trip representative text through creation, printing, save and load.
 
-FR-03 (US3): add task shall require a nonblank description and valid deadline.
+FR-03 (US3): `add task` shall require a nonblank description and valid deadline. Rationale: both fields define a usable task. Verification: accept a valid task and reject missing, blank or invalid fields without changing the collection.
 
-FR-04 (US4): add event shall require a nonblank description, starting time and alarm time. Alarm is a stored timestamp. No restriction between alarm and start is imposed because the course does not specify one.
+FR-04 (US4): `add event` shall require a nonblank description, starting time and alarm time. The alarm shall be stored, printed and searchable. No ordering restriction between alarm and start shall be imposed because Appendix B specifies both fields but no relationship or active notification behavior. Verification: create, search, print and persist events with both timestamps.
 
-FR-05 (US5): add contact shall require nonblank name, address and mobile strings. Mobile strings shall preserve international prefixes, punctuation and leading zeroes. Phone-number regional validation is outside scope.
+FR-05 (US5): `add contact` shall require nonblank name, address and mobile strings. Mobile values shall preserve international prefixes, punctuation and leading zeroes. Rationale: contact data must not be damaged by numeric conversion. Verification: round-trip representative contact values.
 
-FR-06 (US6): edit shall validate all provided fields, then replace the selected record atomically, preserving ID/type. Missing records, unknown fields, repeated fields, incompatible fields or invalid values shall fail without modifying any record.
+FR-06 (US6): `edit` shall validate every supplied field before replacing the selected record and shall preserve its ID and type. A missing record, unknown, repeated or incompatible field, or invalid value shall fail without modifying any field. Rationale: partial edits could leave contradictory data. Verification: test successful edits for every field and multi-field failures that preserve the original record.
 
-FR-07 (US7): search shall support type = and != for text/task/event/contact. Text fields shall support contains, = and != using Unicode casefold. Time fields shall support <, >, = and the extensions <=, >=, != using parsed local datetimes.
+FR-07 (US7): Search shall support `type =` for text, task, event and contact; `contains` for every textual field; and `<`, `>` and `=` for deadline, starting time and alarm. It may additionally support `!=`, `<=` and `>=`. Text comparisons shall be case-insensitive using Unicode case folding, while time comparisons shall use parsed datetimes. Verification: compare result IDs for every field/operator category.
 
-FR-08 (US7): Boolean precedence shall be ! then && then ||. Parentheses shall override precedence. A comparison on a field absent from a record shall be False, including !=. Logical NOT shall negate that result normally. Results shall be ordered by ascending ID. Invalid criteria shall be rejected even when the collection is empty.
+FR-08 (US7): Search shall support `!`, `&&`, `||` and parentheses, with precedence `!` then `&&` then `||`. A comparison involving a field absent from a PIR shall be false before logical negation. Results shall be ordered by ascending ID, and an invalid criterion shall be rejected even for an empty collection. Rationale: explicit semantics prevent ambiguous compound searches. Verification: test precedence, parentheses, negation, missing fields and malformed criteria.
 
-FR-09 (US8): print <id> shall show the record ID, type and every field. print and print all shall show all records ordered by ID. An empty collection/search shall display a no-match message.
+FR-09 (US8): `print <id>` shall show the selected record's ID, type and every field. `print` and `print all` shall show all records in ascending ID order. An empty collection or result shall display `No matching PIRs.` Rationale: users must be able to interpret complete stored data and empty results. Verification: capture output for one, many and zero records.
 
-FR-10 (US9): delete <id> shall delete only that record. A nonexistent ID shall raise a friendly error and preserve the collection.
+FR-10 (US9): `delete <id>` shall delete only the selected record. A nonexistent ID shall produce an error and preserve the collection. Rationale: deletion must not affect unrelated information. Verification: delete one of several records and attempt deletion of a missing ID.
 
-FR-11 (US10): save [file.pim] shall serialize the entire collection with schema_version, next_id and pirs. Omitted filename shall mean pim.pim in the process working directory. Saving over an existing file shall require explicit confirmation. A failed write/replacement shall preserve the old file.
+FR-11 (US10): `save [file.pim]` shall serialize the complete collection, including `schema_version`, `next_id` and every PIR. An omitted filename shall mean `pim.pim` in the process working directory. Overwriting an existing file shall require explicit confirmation. A failed write or replacement shall preserve the old file. Verification: inspect round-trip data, cancelled overwrite behavior and simulated replacement failure.
 
-FR-12 (US11): load <file.pim> shall fully decode and validate a file before replacing the active collection. It shall restore types, fields, IDs and next_id. Unsaved edits shall require confirmation before replacement. Invalid input files shall leave the current collection intact.
+FR-12 (US11): `load <file.pim>` shall completely decode and validate a file before replacing the active collection. It shall restore types, fields, IDs and `next_id`. Replacing unsaved changes shall require confirmation. Invalid input shall preserve the active collection. Verification: test valid round trips, cancellation and malformed files.
 
-FR-13: help shall describe command syntax, search syntax and persistence warnings. exit/quit shall confirm before discarding unsaved modifications. EOF shall end the process and warn if modifications are unsaved. Ctrl-C at the input prompt shall cancel the current input and return to the prompt.
+FR-13: `help` shall describe command, search and persistence syntax. `exit` and `quit` shall confirm before discarding unsaved changes. End-of-file shall terminate and warn when changes are unsaved; Ctrl-C at the input prompt shall cancel the current input and return to the prompt. Rationale: lifecycle behavior must be predictable and avoid accidental loss. Verification: exercise each control path with captured input/output.
 
-### 6.2 Data and interface rules
+### 6.2 Data requirements
 
-DR-01: Input timestamps shall be YYYY-MM-DD, YYYY-MM-DD HH:MM, YYYY-MM-DDTHH:MM or persisted YYYY-MM-DDTHH:MM:00. A date alone means midnight. Seconds other than zero, fractional seconds, timezone offsets, impossible calendar dates and non-zero-padded dates shall be rejected. Display precision is minutes; persisted precision is seconds with :00.
+DR-01: Accepted timestamps shall use `YYYY-MM-DD`, `YYYY-MM-DD HH:MM`, `YYYY-MM-DDTHH:MM` or persisted `YYYY-MM-DDTHH:MM:00`. A date alone shall mean midnight. Nonzero seconds, fractional seconds, timezone offsets, impossible dates and non-zero-padded dates shall be rejected. Display precision shall be minutes; persisted precision shall include `:00` seconds. Verification: boundary tests for valid, invalid and leap-day timestamps.
 
-DR-02: Only files whose final suffix is .pim (case-insensitive) shall be saved/loaded. JSON must be UTF-8, without duplicate keys or nonfinite numbers. Symlink targets are rejected. File size shall not exceed 10 MiB. The root keys shall be exactly schema_version, next_id, pirs; schema_version shall be integer 1 (not Boolean). next_id shall exceed every existing ID and be at least 1. All record IDs shall be distinct positive integers. Unknown fields shall be rejected.
+DR-02: Only files with a final `.pim` suffix, case-insensitively, shall be saved or loaded. A file shall be UTF-8 JSON, contain no duplicate keys or nonfinite numbers and be no larger than 10 MiB. Symbolic-link paths shall be rejected. The root keys shall be exactly `schema_version`, `next_id` and `pirs`; `schema_version` shall be integer 1, not Boolean. PIR IDs shall be distinct positive integers, and unknown fields shall be rejected. Verification: load valid and systematically malformed files and inspect resulting state.
 
-DR-03: Invalid or missing next_id shall be rejected rather than reconstructed. Reconstructing it from current records could reuse previously deleted IDs. Load is replacement, not merging. Two processes writing the same path are not synchronized; simultaneous writers are outside scope.
+DR-03: `next_id` shall be a positive integer greater than every existing ID. A missing or invalid value shall be rejected rather than reconstructed because reconstruction could reuse a deleted ID. Loading shall replace rather than merge collections. Simultaneous writers to one file are outside scope. Verification: test deleted-ID persistence, invalid metadata and replacement semantics.
 
-IR-01: Command names, type names and option names are case-insensitive. Text data preserves case. Search uses English field names, with start mapping to start_time. Multiword values require quotes. Backslashes/quotes follow POSIX shlex rules. Errors begin with 错误. IDs are positive ASCII decimal strings up to 100 digits at the CLI boundary.
+### 6.3 External interface requirements
 
-### 6.3 Quality requirements and acceptance
+IR-01: The terminal interface shall accept case-insensitive command names, type names and option names while preserving the case of stored text. Search shall use English field names, with `start` as an alias for `start_time`. Multiword values shall use shell-style quoting. IDs at the command boundary shall be positive ASCII decimal strings of at most 100 digits. Expected domain errors shall begin with `Error:` and shall not display a traceback. The filesystem interface shall read and write complete `.pim` collections; save shall use a temporary file followed by atomic replacement, and the parent directory shall already exist. Verification: parser, real-process and storage tests shall cover aliases, quoting, invalid input and filesystem failures.
 
-NFR-01: All production imports shall be Python standard library or project-local modules. Automated import checks shall detect an added external dependency.
+### 6.4 Non-functional requirements
 
-NFR-02: All business-state and search rules shall reside under model, without console or file IO. Records and returned collections shall protect state from ordinary direct mutation.
+NFR-01 - Portability and dependency constraint: Production imports shall be Python standard-library or project-local modules. The program shall run on Python 3.9 or later without installing runtime packages. Verification: automated import inspection, syntax compilation and tests on supported Python versions.
 
-NFR-03: Expected invalid-input conditions shall produce domain errors rather than a traceback. Commands are limited to 16,384 characters, criteria to 8,192 characters and nested search operators/parentheses to 64 levels. Files are limited as in DR-02. No platform-independent latency claim is made.
+NFR-02 - Modularity and testability: All business state, validation and search rules shall reside in the `model` package without console or file IO. Records and returned collections shall resist ordinary direct mutation. Verification: architecture import tests and model immutability tests.
 
-NFR-04: Every unit test shall state the behavior it exercises and assert observable expected results. All tests shall execute automatically with unittest. Regression cases shall include malformed commands, failed atomic edits, bad JSON/schema and disk replacement failure.
+NFR-03 - Reliability and bounded input: Expected invalid input shall produce a domain error rather than a traceback. Commands shall be limited to 16,384 characters, search criteria to 8,192 characters, nested Boolean/parenthesis levels to 64 and files to 10 MiB. Verification: automated boundary and regression tests.
 
-NFR-05: The root coverage report shall state executed and total executable model lines, include unexecuted lines in its denominator and identify excluded packages. Target model line coverage is at least 95%; this is a project quality goal, not an instructor-specified threshold. High coverage shall not substitute for correctness checks.
+NFR-04 - Automated tests: Unit tests shall state the behavior exercised and assert observable expected results. All tests shall be automatically executable using `unittest`. Regression coverage shall include malformed commands, atomic edit failure, invalid JSON/schema and disk replacement failure. Verification: run the complete test suite from the repository root.
 
-NFR-06: Developer/user manuals, API contracts, sequence/architecture/component diagrams and the root requirements coverage table shall match the implemented version. The table shall map both US and SRS requirements to tests. Official submission documents shall be PDF, DOC or DOCX.
+NFR-05 - Coverage evidence: The root coverage report shall state executed and total executable model lines, include missed executable lines in its denominator and identify excluded packages. The project quality target is at least 95% model line coverage; this target is team-selected rather than instructor-mandated. Verification: regenerate and inspect `coverage_report.txt` and its PDF export.
 
-### 6.4 Acceptance examples
+NFR-06 - Documentation consistency: Developer and user manuals, API contracts, architecture/component/interaction diagrams and the root requirements coverage table shall describe the released implementation. The coverage table shall map Appendix B stories and SRS requirement IDs to implementation and test evidence. Required submission documents shall be delivered as PDF, DOC or DOCX. Verification: release review plus the submission checker.
 
-Create all four types, edit a task deadline, search type = task && deadline < 2027-01-01, print the selected ID, delete it, save, restart, and load. Confirm field values and the next allocated ID. Repeat with print abc, delete without an ID, an unknown edit field, an invalid date and a corrupt JSON file. Every invalid operation must preserve prior data and allow the next valid command. Automated coverage: tests/test_acceptance.py and tests/test_quality.py.
+### 6.5 Acceptance and validation
 
-### 6.5 Open approvals
+The primary acceptance scenario shall create all four PIR types, edit a task deadline, search using `type = task && deadline < 2027-01-01`, print the selected ID, delete it, save, restart and load. The restored records and next allocated ID shall match the pre-save state. Negative scenarios shall include `print abc`, delete without an ID, an unknown edit field, an invalid date and corrupt JSON. Every invalid operation shall preserve prior valid data and allow the next valid command.
 
-TO BE FILLED BY TEAM: member names and responsibilities; contribution percentages agreed by all members; Lecture 04 chapter-structure comparison; instructor confirmation of alarm-field interpretation if needed. These are not represented as completed approvals.
+Requirements validation uses the five checks from Lecture 04. Validity is supported by direct mapping to US1-US11. Consistency is checked through shared field schemas and common datetime/storage rules. Completeness is checked by the requirements coverage table. Realism is supported by a standard-library implementation and executable acceptance scenario. Verifiability is provided by observable acceptance criteria and automated tests. Manual review remains necessary for usability, document accuracy and presentation readiness.
+
+The root `requirements_coverage.md` provides the detailed traceability matrix from course stories and SRS requirements to code and tests. `tests/test_acceptance.py` and `tests/test_quality.py` automate the main positive and negative acceptance scenarios.
