@@ -72,6 +72,20 @@ class ModelContractTests(unittest.TestCase):
                     with self.subTest(kind=kind, key=key, value=value), self.assertRaises(ValidationError):
                         PIRFactory.create(kind, dict(fields, **{key: value}))
 
+    def test_text_fields_require_utf8_encodable_unicode(self):
+        """Text fields reject isolated surrogates while preserving valid Unicode."""
+        text_fields = {
+            'text': ('text',),
+            'task': ('description',),
+            'event': ('description',),
+            'contact': ('name', 'address', 'mobile'),
+        }
+        for kind, keys in text_fields.items():
+            for key in keys:
+                with self.subTest(kind=kind, key=key), self.assertRaises(ValidationError):
+                    PIRFactory.create(kind, dict(CASES[kind], **{key: '\ud800'}))
+        self.assertEqual(TextPIR(text='😀').get_text(), '😀')
+
     def test_direct_constructor_validation(self):
         """Direct model construction applies the same required-field rules."""
         for constructor in [lambda: TaskPIR(description=''), lambda: TaskPIR(description='x'),
@@ -295,6 +309,7 @@ class StorageContractTests(unittest.TestCase):
             path = Path(folder) / 'bad.pim'
             for payload in [b'not JSON', b'\xff', b'{}', b'{"pirs": [], "pirs": []}',
                             b'{"schema_version": NaN}', b'[' * 2000,
+                            b'{"schema_version":1,"next_id":2,"pirs":[{"id":1,"type":"text","text":"\\ud800"}]}',
                             json.dumps({'schema_version': 1, 'next_id': 2, 'pirs': [{'id': 1, 'type': None}]}).encode()]:
                 path.write_bytes(payload)
                 with self.assertRaises(StorageError):
@@ -333,7 +348,8 @@ class StorageContractTests(unittest.TestCase):
             with patch('storage.storage.MAX_FILE_BYTES', 1), self.assertRaises(StorageError):
                 Storage.load(path)
             manager = PIMManager()
-            manager.add_pir(TextPIR(text='\ud800'))
+            corrupted = manager.add_pir(TextPIR(text='valid'))
+            object.__setattr__(corrupted, 'text', '\ud800')
             with self.assertRaises(StorageError):
                 Storage.save(path, manager)
             self.assertEqual(path.read_text(), '{}')

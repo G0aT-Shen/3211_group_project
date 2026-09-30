@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from .exceptions import ValidationError
-from .pir import PIR, format_datetime, parse_datetime
+from .pir import PIR, _validate_required_text, format_datetime, parse_datetime
 
 
 class TaskPIR(PIR):
@@ -12,8 +12,7 @@ class TaskPIR(PIR):
 
     def __init__(self, record_id: int | None = None, description: str = "", deadline: datetime | str | None = None) -> None:
         super().__init__(record_id)
-        if not isinstance(description, str) or not description.strip():
-            raise ValidationError("Task description cannot be blank")
+        description = _validate_required_text(description, "Task description")
         if deadline is None:
             raise ValidationError("Task requires a deadline")
         self.description = description

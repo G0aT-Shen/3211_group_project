@@ -12,6 +12,17 @@ from .exceptions import ValidationError
 DATETIME_FORMAT = "%Y-%m-%d %H:%M"
 
 
+def _validate_required_text(value: Any, label: str) -> str:
+    """Return a nonblank string that can be represented as UTF-8."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValidationError(f"{label} cannot be blank")
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise ValidationError(f"{label} must be valid UTF-8 text") from exc
+    return value
+
+
 def parse_datetime(value: Any) -> datetime:
     """Parse a CLI value or ISO value into a naive datetime."""
     if isinstance(value, datetime):

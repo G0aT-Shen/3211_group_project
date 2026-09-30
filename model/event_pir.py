@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from .exceptions import ValidationError
-from .pir import PIR, format_datetime, parse_datetime
+from .pir import PIR, _validate_required_text, format_datetime, parse_datetime
 
 
 class EventPIR(PIR):
@@ -12,8 +12,7 @@ class EventPIR(PIR):
 
     def __init__(self, record_id: int | None = None, description: str = "", start_time: datetime | str | None = None, alarm: datetime | str | None = None) -> None:
         super().__init__(record_id)
-        if not isinstance(description, str) or not description.strip():
-            raise ValidationError("Event description cannot be blank")
+        description = _validate_required_text(description, "Event description")
         if start_time is None or alarm is None:
             raise ValidationError("Event requires start and alarm")
         self.description = description

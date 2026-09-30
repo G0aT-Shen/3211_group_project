@@ -34,11 +34,20 @@ To add a PIR type, define an immutable model subclass, register it in model/fact
 ## 5. Document and release generation
 Markdown files under docs are editable sources. Formal submission uses their PDF exports. Document rendering and slides are authoring tools, separate from the standard-library product. The render builder uses ReportLab; slides use the artifact authoring runtime. Those tools are not imported by the application. Pre-generated PDFs/PPTX are provided so users do not need them to run the project.
 
+Edit `docs/team_members.json` with the agreed display names, for example `{"members": ["Alice", "Bob"]}` (these are syntax examples, not actual member identities). An empty list deliberately keeps the deck a draft. Regenerate the coverage report before building slides; slide verification numbers come directly from that report. The builder locates the repository relative to its own script and can run from any working directory.
+
+```bash
+node tools/build_slides.mjs --help
+node tools/build_slides.mjs
+```
+
+The builder defaults to the current user's bundled authoring runtime. For another installation set `PIM_RUNTIME_DEPS` to the dependencies directory containing node/node_modules and python/bin/python3, and `PIM_PRESENTATION_SKILL` to the presentation tools directory containing container_tools. Optional `PIM_PYTHON` overrides the validator executable path; `PIM_SOFFICE` overrides the LibreOffice executable used to export PDF (it may be `soffice` when available on PATH). Missing dependencies fail before published files are replaced. The builder validates the PPTX, exports its PDF, then writes both outputs and output/presentation/build_manifest.json. The manifest records SHA-256 hashes of both outputs, team_members.json and coverage_report.txt.
+
 ```bash
 python3 tools/check_submission.py
 python3 tools/package_submission.py
 ```
-The submission checker reports missing human deliverables and fails until they are present and unresolved placeholders are resolved. The packaging tool refuses to label an incomplete archive as final. It excludes .git, caches, local .pim files and private build outputs. Group members must complete the official Honour Declaration, agree contributions, verify lecture formatting and record the required presentations.
+The submission checker reports missing human deliverables and fails until they are present and unresolved placeholders are resolved. It inspects the final PPTX slide/notes text, verifies the displayed member list against team_members.json, and checks the build manifest so an older PDF or deck cannot be silently mixed with new configuration or coverage data. Rebuild the pair after changing any recorded input or editing either output. The packaging tool includes the member configuration and manifest and refuses to label an incomplete archive as final. It excludes .git, caches, local .pim files and private build outputs. Group members must complete the official Honour Declaration, agree contributions, verify lecture formatting and record the required presentations.
 
 ## 6. Data operations and known boundaries
 Saving flushes and fsyncs a temporary file, then replaces the destination. Failure preserves prior target bytes and attempts to remove the temporary artifact. If the operating system also refuses cleanup, the error reports the temporary path for later manual removal. Path inspection and cleanup errors are translated into StorageError so the CLI remains usable. Files are not encrypted. Single-process usage is assumed; no advisory locking or cross-machine time conversion is implemented. Application limits and local timestamp interpretation are explicit in the SRS/user manual.

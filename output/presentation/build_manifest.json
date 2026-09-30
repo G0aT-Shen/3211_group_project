@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "sha256": {
+    "output/presentation/PIM_presentation.pptx": "a7176c779afca20525c94114b541c879d6fa05baaf82345f67a3c07a0d21179d",
+    "output/presentation/PIM_presentation.pdf": "255d3fc0785b9244b381ea802d7961d6a869d94c1679082aa58b186eb9b0a45e",
+    "docs/team_members.json": "d61afd30a40858cdd224f7a4e74203373672a986be8ef785d471cf2006792801",
+    "coverage_report.txt": "651e913533cc193556e24ee43157f9a0bbe218c27331ee26798e2da8172ba8a3"
+  }
+}

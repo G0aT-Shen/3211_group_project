@@ -1,19 +1,19 @@
 Model line coverage (stdlib trace; includes unexecuted executable lines)
 Python 3.9.6
-Tests: 55, failures: 0, errors: 0
+Tests: 60, failures: 0, errors: 0
 Scope: every .py file in model/. CLI/controller/storage/view/tests are excluded from denominator.
 Definition: executed executable lines / all executable lines identified by trace.
 No branch-coverage claim. Abstract method and protocol declaration lines remain in denominator.
 
 File                              Executed  Executable  Coverage
 model/__init__.py                      9           9   100.00%
-model/contact_pir.py                  23          23   100.00%
-model/event_pir.py                    27          27   100.00%
+model/contact_pir.py                  21          21   100.00%
+model/event_pir.py                    26          26   100.00%
 model/exceptions.py                   13          13   100.00%
 model/factory.py                      47          47   100.00%
 model/manager.py                      73          74    98.65%
-model/pir.py                          57          58    98.28%
-model/search.py                      120         120   100.00%
-model/task_pir.py                     24          24   100.00%
-model/text_pir.py                     18          18   100.00%
-TOTAL                                411         413    99.52%
+model/pir.py                          65          66    98.48%
+model/search.py                      123         123   100.00%
+model/task_pir.py                     23          23   100.00%
+model/text_pir.py                     15          15   100.00%
+TOTAL                                415         417    99.52%

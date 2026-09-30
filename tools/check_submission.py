@@ -1,8 +1,12 @@
 """Read-only release gate. Exits nonzero until every required item is present."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
+import re
 import struct
+import xml.etree.ElementTree as ET
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = [
@@ -10,6 +14,8 @@ REQUIRED = [
     'output/pdf/SRS.pdf', 'output/pdf/design.pdf', 'output/pdf/dev_manual.pdf',
     'output/pdf/user_manual.pdf', 'output/pdf/requirements_coverage.pdf',
     'output/demo/system_demo.mp4', 'output/presentation/PIM_presentation.pdf',
+    'output/presentation/PIM_presentation.pptx', 'docs/team_members.json',
+    'output/presentation/build_manifest.json',
     'submission_inputs/Honour Declaration.pdf', 'submission_inputs/presentation_recording.mp4',
     'submission_inputs/review_status.json',
 ]
@@ -17,6 +23,70 @@ APPROVALS = ['lecture04_structure_checked', 'member_fields_completed',
              'contributions_agreed', 'official_declaration_signed',
              'every_presenter_face_and_id_verified', 'each_member_speaks_at_least_one_minute',
              'documents_match_final_implementation']
+TEAM_MARKER = 'TO BE FILLED BY TEAM'
+PRESENTATION_INPUTS = ['output/presentation/PIM_presentation.pptx',
+                       'output/presentation/PIM_presentation.pdf',
+                       'docs/team_members.json', 'coverage_report.txt']
+
+
+def presentation_issues(root):
+    """Inspect the shipped slides and notes, including text split across XML runs."""
+    issues, members = [], []
+    config = root / 'docs/team_members.json'
+    if config.is_file():
+        try:
+            data = json.loads(config.read_text(encoding='utf-8'))
+            if (not isinstance(data, dict) or set(data) != {'members'}
+                    or not isinstance(data['members'], list)
+                    or not data['members']
+                    or any(not isinstance(name, str) or not name.strip()
+                           or name != name.strip() or TEAM_MARKER in name
+                           or any(ord(char) < 32 for char in name)
+                           for name in data['members'])
+                    or len(set(data['members'])) != len(data['members'])):
+                raise ValueError('members must be a nonempty list of unique, nonblank names')
+            members = data['members']
+            for name in members:
+                name.encode('utf-8')
+        except (OSError, ValueError, UnicodeError) as exc:
+            issues.append('Invalid team member configuration: ' + str(exc))
+    name = 'output/presentation/PIM_presentation.pptx'
+    deck = root / name
+    if deck.is_file():
+        try:
+            slides, notes = [], []
+            with zipfile.ZipFile(deck) as archive:
+                for part in archive.namelist():
+                    if re.fullmatch(r'ppt/(slides/slide|notesSlides/notesSlide)\d+\.xml', part):
+                        document = ET.fromstring(archive.read(part))
+                        # Join text runs within each paragraph, not across paragraphs.
+                        paragraphs = [''.join(node.itertext()) for node in document.iter()
+                                      if node.tag.rsplit('}', 1)[-1] == 'p']
+                        (slides if part.startswith('ppt/slides/') else notes).extend(paragraphs)
+            if not slides:
+                raise ValueError('no slide text found')
+            if any(TEAM_MARKER in text for text in slides + notes):
+                issues.append('Unresolved team placeholder: ' + name)
+            if members and 'Group members: ' + ', '.join(members) not in slides:
+                issues.append(f'Presentation members do not match docs/team_members.json; regenerate {name}')
+        except (OSError, ValueError, zipfile.BadZipFile, ET.ParseError) as exc:
+            issues.append('Invalid presentation: ' + str(exc))
+    manifest = root / 'output/presentation/build_manifest.json'
+    if manifest.is_file():
+        try:
+            data = json.loads(manifest.read_text(encoding='utf-8'))
+            if (not isinstance(data, dict) or set(data) != {'schema_version', 'sha256'}
+                    or type(data['schema_version']) is not int or data['schema_version'] != 1
+                    or not isinstance(data['sha256'], dict)
+                    or set(data['sha256']) != set(PRESENTATION_INPUTS)):
+                raise ValueError('expected schema_version=1 and hashes of all presentation inputs')
+            for name in PRESENTATION_INPUTS:
+                path = root / name
+                if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != data['sha256'][name]:
+                    issues.append('Stale presentation build: ' + name + '; rebuild slides and PDF together')
+        except (OSError, ValueError, UnicodeError) as exc:
+            issues.append('Invalid presentation build manifest: ' + str(exc))
+    return issues
 
 
 def mp4_duration(path):
@@ -88,8 +158,9 @@ def check(root=ROOT):
     # Markers in official doc sources must be resolved before regenerating final PDFs.
     for name in ['docs/SRS.md', 'docs/presentation_script.md']:
         path = root / name
-        if path.is_file() and 'TO BE FILLED BY TEAM' in path.read_text(encoding='utf-8'):
+        if path.is_file() and TEAM_MARKER in path.read_text(encoding='utf-8'):
             issues.append('Unresolved team placeholder: ' + name)
+    issues.extend(presentation_issues(root))
     return issues
 
 

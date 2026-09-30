@@ -104,7 +104,10 @@ class SearchParser:
             if value in {"(", ")", "!", "&&", "||"} | set(OPERATORS):
                 raise SearchParseError("Missing comparison value; quote special characters")
             if value[0] in "\"'":
-                value = shlex.split(value)[0]
+                try:
+                    value = shlex.split(value)[0]
+                except ValueError as exc:
+                    raise SearchParseError(f"Invalid quoted search value: {exc}") from exc
             elif re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) and re.fullmatch(r"\d{2}:\d{2}", peek() or ""):
                 value += " " + take()
             return ComparisonNode(field, op, value)

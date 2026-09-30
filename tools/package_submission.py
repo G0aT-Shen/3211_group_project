@@ -26,11 +26,13 @@ def main():
                  'tools/check_submission.py','tools/package_submission.py','tools/demo_session.py']:
         files.append(ROOT / name)
     files.append(ROOT / 'docs/review_status.example.json')
+    files.append(ROOT / 'docs/team_members.json')
     files.extend((ROOT / 'docs').glob('*.md'))
     files.extend((ROOT / 'docs').glob('*.mermaid'))
     files.extend((ROOT / 'output/pdf').glob('*.pdf'))
     files.extend((ROOT / 'output/presentation').glob('*.pdf'))
     files.extend((ROOT / 'output/presentation').glob('*.pptx'))
+    files.append(ROOT / 'output/presentation/build_manifest.json')
     files.extend((ROOT / 'output/demo').glob('*.mp4'))
     files.extend((ROOT / 'output/demo').glob('*.json'))
     with zipfile.ZipFile(path,'x',compression=zipfile.ZIP_DEFLATED) as archive:

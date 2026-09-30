@@ -12,7 +12,7 @@ add task "Submit report" --deadline 2026-11-19 20:00
 add event "Team meeting" --start 2026-10-12 09:00 --alarm 2026-10-12 08:30
 add contact --name "Alice" --address "Hong Kong" --mobile "+852 01234567"
 ```
-The response 已创建 PIR #1 means record 1 was created. Every required field must be nonblank. Mobile numbers are strings: leading zeroes and international prefixes are preserved. The event alarm is saved, displayed and searchable; the application does not issue OS notifications.
+The response `Created PIR #1` means record 1 was created. Every required field must be nonblank. Mobile numbers are strings: leading zeroes and international prefixes are preserved. The event alarm is saved, displayed and searchable; the application does not issue OS notifications.
 
 Time format is YYYY-MM-DD HH:MM, using local time without an offset. A date alone means 00:00. ISO YYYY-MM-DDTHH:MM and YYYY-MM-DDTHH:MM:00 are also accepted. Invalid dates, offsets and nonzero seconds are rejected. An alarm can precede or follow the start time.
 
@@ -35,7 +35,7 @@ search name contains "Alice" || mobile contains "0123"
 search alarm = "2026-10-12 08:30"
 search 'text contains "hello world"'
 ```
-A search expression may be entered directly or inside a single outer pair of quotes. For nested quotations, use different quote styles as in the last example. Backslashes follow POSIX shlex rules; a literal Windows-style path should use single quotes. To search text beginning with --, use a quoted search literal; CLI option values themselves cannot begin with -- in this version.
+A search expression may be entered directly or inside a single outer pair of quotes. For nested quotations, use different quote styles as in the last example. Backslashes follow POSIX shlex rules; a literal Windows-style path should use single quotes. Quote text beginning with -- to preserve it as data: `add text "--todo"`, `edit 1 --text "--archived"` and `search text contains "--"` are valid. Unquoted option tokens still require a following value. Malformed quoted searches report an error and leave the current collection and session usable.
 
 Fields: type for all records; text for notes; description for tasks/events; deadline for tasks; start/start_time and alarm for events; name/address/mobile for contacts. Type supports = and !=. Text supports contains, = and !=, all case-insensitive using Unicode casefold. Dates support < <= > >= = !=. Empty contains "" matches every record that has that text field.
 
@@ -47,7 +47,7 @@ print all
 print
 print 2
 ```
-A record appears as #ID [type] followed by all its fields. Task/event timestamps show minute precision. Contacts show address and mobile without numeric conversion. 没有匹配的 PIR means the result/collection is empty. A missing positive ID produces 找不到 PIR rather than a blank record.
+A record appears as `#ID [type]` followed by all its fields. Task/event timestamps show minute precision. Contacts show address and mobile without numeric conversion. `No matching PIRs.` means the result or collection is empty. A missing positive ID produces `Error: PIR #ID was not found` rather than a blank record.
 
 ## 6. Save and load
 ```text
@@ -62,7 +62,7 @@ load replaces the entire current collection, not merges it. The file is validate
 Files are UTF-8 JSON containing schema_version=1, next_id and pirs. Unsupported schemas, repeated IDs/keys, unknown fields, bad dates or missing metadata are rejected. Files are limited to 10 MiB. Symbolic links are rejected. Use one writing process per file and keep a separate backup of valuable information.
 
 ## 7. Errors and limits
-Errors start with 错误 and explain the invalid command or data. For example print abc reports an invalid ID, delete without an argument shows usage, and edit 1 --unknown x rejects the field. The next command remains usable. Wrong dates and incomplete quotes do not create or partially edit records.
+Errors start with `Error:` and explain the invalid command or data. For example `print abc` reports an invalid ID, `delete` without an argument shows usage, and `edit 1 --unknown x` rejects the field. The next command remains usable. Wrong dates and incomplete quotes do not create or partially edit records.
 
 Limits: 16,384 characters per command; 8,192 per search expression; 64 nested Boolean/parenthesis levels; positive ASCII IDs up to 100 digits; 10 MiB per saved file. Fields cannot be blank. These checks bound accidental or malformed input, not a security sandbox. Terminal control sequences in personally supplied data are outside the intended trusted local input model.
 

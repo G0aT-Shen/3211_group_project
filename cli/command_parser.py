@@ -6,6 +6,17 @@ import shlex
 from model.exceptions import InvalidCommandError, ValidationError
 from model.factory import FIELD_SCHEMAS, PIRFactory
 
+# Shell words may concatenate quoted and unquoted fragments. Keep their raw
+# spelling so a quoted value beginning with -- is not mistaken for an option.
+SHELL_WORD = re.compile(r'''(?:[^ \t\r\n'"\\]|\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'[^']*')+''')
+
+
+def split_arguments(tail: str) -> tuple[list[str], list[bool]]:
+    values = shlex.split(tail)
+    raw_words = SHELL_WORD.findall(tail)
+    quoted = ["'" in word or '"' in word or "\\" in word for word in raw_words]
+    return values, quoted
+
 
 @dataclass
 class Command:
@@ -41,7 +52,7 @@ class CommandParser:
                 tail = tokens[0]
             return Command(name, [tail])
         try:
-            args = shlex.split(tail)
+            args, quoted = split_arguments(tail)
         except ValueError as exc:
             raise InvalidCommandError(f"Unmatched command quote: {exc}") from exc
         if name == "quit":
@@ -62,12 +73,14 @@ class CommandParser:
             if not args or args[0].lower() not in FIELD_SCHEMAS:
                 raise InvalidCommandError("Usage: add text|task|event|contact ...")
             type_name = args.pop(0).lower()
+            quoted.pop(0)
             options = {}
             if type_name != "contact":
-                if not args or args[0].startswith("--"):
+                if not args or (args[0].startswith("--") and not quoted[0]):
                     raise InvalidCommandError(f"add {type_name} requires quoted text or description")
                 options["text" if type_name == "text" else "description"] = args.pop(0)
-            parsed = self._options(args)
+                quoted.pop(0)
+            parsed = self._options(args, quoted)
             if options.keys() & parsed.keys():
                 raise InvalidCommandError("Text or description cannot be specified twice")
             options.update(parsed)
@@ -80,13 +93,14 @@ class CommandParser:
             if not args:
                 raise InvalidCommandError("Usage: edit <id> --field value")
             record_id = positive_id(args.pop(0))
-            options = self._options(args)
+            quoted.pop(0)
+            options = self._options(args, quoted)
             if not options:
                 raise InvalidCommandError("edit requires at least one --field value")
             return Command(name, [record_id], options)
         raise InvalidCommandError(f"Unknown command: {name}")
 
-    def _options(self, tokens: list[str]) -> dict[str, str]:
+    def _options(self, tokens: list[str], quoted: list[bool]) -> dict[str, str]:
         options = {}
         index = 0
         allowed = set().union(*map(set, FIELD_SCHEMAS.values()))
@@ -100,7 +114,7 @@ class CommandParser:
                 raise InvalidCommandError(f"Unknown field: {key}")
             if key in options:
                 raise InvalidCommandError(f"Duplicate field: {key}")
-            if index + 1 >= len(tokens) or tokens[index + 1].startswith("--"):
+            if index + 1 >= len(tokens) or (tokens[index + 1].startswith("--") and not quoted[index + 1]):
                 raise InvalidCommandError(f"Field {key} is missing a value")
             value = tokens[index + 1]
             index += 2
