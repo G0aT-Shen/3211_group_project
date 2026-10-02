@@ -8,7 +8,7 @@ A command-line personal information management system built on the Python standa
 
 Python 3.9+ is supported. Validated on macOS with Python 3.9.6 and 3.12.14, with no third-party runtime dependencies.
 
-Current local status: 60 automated tests pass; model line coverage is 415/417 (99.52%, including unexecuted lines). GitHub Actions run `35303259313` passed the previous revision's tests, coverage check, and `compileall` on Python 3.9, 3.11, and 3.12.
+Current local status (1 October 2026 code-review fixes): 73 automated tests pass on Python 3.9.6 and 3.12.14; fresh model line coverage is 436/438 (99.54%, including unexecuted lines). The extracted draft archive also passes all 73 tests. Checked-in coverage/PDF/PPTX artifacts remain the earlier authoring snapshot; regenerate them before final submission as described in the developer manual. GitHub Actions run `35303259313` passed an earlier revision's tests, coverage check, and `compileall` on Python 3.9, 3.11, and 3.12.
 
 ```bash
 python3 main.py

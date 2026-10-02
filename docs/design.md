@@ -50,6 +50,8 @@ PIR fields: _id: int|None, type_name: str and _sealed: bool. None is allowed onl
 
 Manager fields: _pirs: dict[int,PIR] and _next_id:int. pirs is a read-only mapping view; next_id is a read-only property. add_pir returns a new identified record; it does not mutate the caller's unidentified draft. A failed construction/edit does not consume IDs or alter the mapping.
 
+model/ids.py defines the shared 100-digit record ID limit. validate_record_id(value:int)->None rejects values outside 1..10^100-1; validate_next_id(value:int)->None accepts 1..10^100, with the upper value reserved for exhaustion. Both raise ValidationError. Exhausted collections reject additions while retaining normal inspection, editing, deletion and persistence. Interrupted allocation rolls back the record and counter together.
+
 ComparisonNode fields: field:str, op:str, value:str, expected:str|datetime. LogicNode fields: op:str and children:tuple[SearchNode,...]. SearchParser holds no mutable parse state across calls. Command fields: name:str, args:list[str], options:dict[str,str]. Repl holds manager, storage, printer, parser, search_parser, dirty:bool and an optional confirmation callback.
 
 ## 3. Public/protected API contracts
@@ -75,6 +77,8 @@ Storage.save(path:str|Path,manager:PIMManager)->None and load(path:str|Path)->PI
 Printer.print_pir(pir:PIR)->None; print_all(pirs:list[PIR])->None; print_msg(message:str)->None; print_error(error:PIMException)->None. These write presentation text only.
 
 Repl(manager:PIMManager|None=None,storage:Storage|None=None,printer:Printer|None=None,confirm:Callable|None=None); run()->None reads commands; execute(command:Command)->bool returns True when exit is accepted. execute expects a Command produced by CommandParser and may raise PIMException; run handles it. _confirm(prompt:str)->bool accepts explicit y/yes, cancelling on EOF/Ctrl-C. The injectable confirmation callback enables tests without human input.
+
+run also handles KeyboardInterrupt during command execution. Interrupted operations that can change data conservatively set dirty=True because the interrupt can arrive after a commit; read-only command cancellation does not change the flag. The session remains usable. A cancelled save before replacement cleans its temporary file and preserves the previous target.
 
 ## 4. Search grammar and semantics
 
@@ -132,7 +136,7 @@ sequenceDiagram
 
 Save validates a model snapshot and JSON byte size before creating a temporary file in the destination directory. It writes, flushes and fsyncs that file, closes it, then uses os.replace to commit it. On failure the old target survives and cleanup is attempted. If cleanup itself fails, StorageError reports the temporary path for manual removal. OS errors in path inspection and overwrite checks also become StorageError. Atomic replacement protects against partial file writes; it is not a multi-process lock or a guarantee against every filesystem/power-loss scenario.
 
-Load reads at most 10 MiB + 1 byte, decodes UTF-8, rejects duplicate keys/nonfinite numbers and constructs an entirely new manager. Only after full validation and any required user confirmation does Repl replace its active manager. Schema migration is deliberately explicit: unsupported versions and bad next_id are errors, preventing silent data loss or ID reuse.
+Load opens with nonblocking/no-follow flags where provided by the platform, verifies the opened descriptor refers to a regular file, reads at most 10 MiB + 1 byte, decodes UTF-8, rejects duplicate keys/nonfinite numbers and constructs an entirely new manager. This prevents a named pipe from blocking before validation and checks the opened file rather than relying only on prior path inspection. Only after full validation and any required user confirmation does Repl replace its active manager. Schema migration is deliberately explicit: unsupported versions and bad next_id are errors, preventing silent data loss or ID reuse.
 
 ## 7. Verification and decisions revised from the initial plan
 

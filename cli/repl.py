@@ -58,9 +58,17 @@ class Repl:
                 continue
             if not line.strip():
                 continue
+            command = None
             try:
-                if self.execute(self.parser.parse(line)):
+                command = self.parser.parse(line)
+                if self.execute(command):
                     break
+            except KeyboardInterrupt:
+                # An interrupt may arrive after a mutation/commit but before its
+                # dirty flag update. Keep the exit confirmation in that case.
+                if command is not None and command.name in {"add", "edit", "delete", "save", "load"}:
+                    self.dirty = True
+                self.printer.print_msg("Command cancelled; use exit to quit. Check records before saving.")
             except PIMException as exc:
                 self.printer.print_error(exc)
 

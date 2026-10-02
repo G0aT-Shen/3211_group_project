@@ -51,7 +51,7 @@ class AcceptanceTests(unittest.TestCase):
     def test_production_imports_are_standard_library_or_project(self):
         """All production imports come from the explicit stdlib/project allowlist."""
         allowed = {'__future__', 'abc', 'datetime', 're', 'typing', 'types', 'operator', 'shlex',
-                   'dataclasses', 'json', 'os', 'pathlib', 'tempfile', 'model', 'controller', 'cli', 'storage', 'view'}
+                   'dataclasses', 'json', 'os', 'pathlib', 'stat', 'tempfile', 'model', 'controller', 'cli', 'storage', 'view'}
         files = [ROOT / 'main.py']
         for package in ['model', 'controller', 'cli', 'storage', 'view']:
             files.extend((ROOT / package).glob('*.py'))

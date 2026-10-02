@@ -5,6 +5,7 @@ import re
 import shlex
 from model.exceptions import InvalidCommandError, ValidationError
 from model.factory import FIELD_SCHEMAS, PIRFactory
+from model.ids import MAX_ID_DIGITS
 
 # Shell words may concatenate quoted and unquoted fragments. Keep their raw
 # spelling so a quoted value beginning with -- is not mistaken for an option.
@@ -26,8 +27,8 @@ class Command:
 
 
 def positive_id(value: str) -> str:
-    if not re.fullmatch(r"[0-9]{1,100}", value) or int(value) < 1:
-        raise InvalidCommandError("ID must be a positive integer (up to 100 digits)")
+    if not re.fullmatch(rf"[0-9]{{1,{MAX_ID_DIGITS}}}", value) or int(value) < 1:
+        raise InvalidCommandError(f"ID must be a positive integer (up to {MAX_ID_DIGITS} digits)")
     return value
 
 

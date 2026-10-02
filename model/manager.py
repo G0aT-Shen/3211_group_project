@@ -5,6 +5,7 @@ from types import MappingProxyType
 from .pir import PIR
 from .factory import PIRFactory
 from .exceptions import PIRNotFoundError, ValidationError
+from .ids import MAX_RECORD_ID, validate_next_id, validate_record_id
 
 
 class Criterion(Protocol):
@@ -15,11 +16,11 @@ class Criterion(Protocol):
 class PIMManager:
     def __init__(self, pirs: Iterable[PIR] | None = None, next_id: int = 1) -> None:
         self._pirs: dict[int, PIR] = {}
-        if type(next_id) is not int or next_id < 1:
-            raise ValidationError("next_id must be a positive integer")
+        validate_next_id(next_id)
         for pir in pirs or ():
             if not isinstance(pir, PIR) or pir.get_id() is None:
                 raise ValidationError("Existing records must be PIRs with IDs")
+            validate_record_id(pir.get_id())
             if pir.get_id() in self._pirs:
                 raise ValidationError(f"Duplicate PIR ID: {pir.get_id()}")
             self._pirs[pir.get_id()] = pir
@@ -36,14 +37,22 @@ class PIMManager:
     def add_pir(self, pir: PIR) -> PIR:
         if not isinstance(pir, PIR) or pir.get_id() is not None:
             raise ValidationError("A new record must be a PIR without an assigned ID")
-        assigned = PIRFactory.create(pir.get_type(), pir.get_fields(), self._next_id)
-        self._pirs[self._next_id] = assigned
-        self._next_id += 1
+        if self._next_id > MAX_RECORD_ID:
+            raise ValidationError("ID space is exhausted; no further records can be added to this collection")
+        record_id = self._next_id
+        assigned = PIRFactory.create(pir.get_type(), pir.get_fields(), record_id)
+        try:
+            self._pirs[record_id] = assigned
+            self._next_id = record_id + 1
+        except KeyboardInterrupt:
+            # Keep the record/counter pair consistent when the REPL resumes.
+            self._pirs.pop(record_id, None)
+            self._next_id = record_id
+            raise
         return assigned
 
     def get_pir(self, record_id: int) -> PIR:
-        if type(record_id) is not int or record_id < 1:
-            raise ValidationError("ID must be a positive integer")
+        validate_record_id(record_id)
         if record_id not in self._pirs:
             raise PIRNotFoundError(f"PIR #{record_id} was not found")
         return self._pirs[record_id]
@@ -83,6 +92,7 @@ class PIMManager:
             raise ValidationError("pirs must be an array")
         pirs = [PIRFactory.from_dict(item) for item in data["pirs"]]
         next_id = data["next_id"]
-        if type(next_id) is not int or next_id <= max((pir.get_id() for pir in pirs), default=0):
+        validate_next_id(next_id)
+        if next_id <= max((pir.get_id() for pir in pirs), default=0):
             raise ValidationError("next_id must be a positive integer greater than every existing ID")
         return cls(pirs, next_id)

@@ -10,6 +10,8 @@ Codex helped create/revise the Python model, command/search parser, CLI, storage
 
 The initial implementation passed 12 tests but missed invalid ID crashes, silent unknown edits and multiword search quotation handling. The initial trace command reported only executed lines, producing a misleading 100% summary. Those claims were corrected by regression tests and a new report that counts missed executable lines. The improved suite covers strict schemas, failed disk replacement and cancelled data-loss confirmations. Members must independently review the supplied code and understand the design before presenting.
 
+On 1 October 2026, Codex assisted with a full code review and fixes for command-time interruption, ID range consistency/exhaustion, regular-file loading, incomplete authoring-tool packaging and malformed MP4 nesting. Regression tests first reproduced the failures. The resulting 73-test suite passed locally on Python 3.9.6 and 3.12.14, and an extracted draft archive passed the same suite. Fresh model line coverage measured 436/438 (99.54%). Human deliverables and approvals remain the team's responsibility; the earlier PDF/PPTX authoring snapshot was not regenerated in this code-fix pass.
+
 ## Information to transfer into the official form
 
 TO BE FILLED BY TEAM: member names/IDs, AI tools used by each member, dates and assisted deliverables, individual contributions agreed by the entire group, signatures and required declaration wording. Use the official course/university form from Canvas. Do not substitute this note for that form. Do not upload student ID images to a public repository.

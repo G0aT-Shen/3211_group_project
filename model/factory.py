@@ -4,6 +4,7 @@ from typing import Any
 from .contact_pir import ContactPIR
 from .event_pir import EventPIR
 from .exceptions import ValidationError
+from .ids import validate_record_id
 from .pir import PIR
 from .task_pir import TaskPIR
 from .text_pir import TextPIR
@@ -49,6 +50,5 @@ class PIRFactory:
     def from_dict(data: dict[str, Any]) -> PIR:
         if not isinstance(data, dict) or not {"id", "type"} <= data.keys():
             raise ValidationError("PIR data must contain id and type")
-        if type(data["id"]) is not int or data["id"] < 1:
-            raise ValidationError("A saved PIR ID must be a positive integer")
+        validate_record_id(data["id"])
         return PIRFactory.create(data["type"], {key: value for key, value in data.items() if key not in {"id", "type"}}, data["id"])

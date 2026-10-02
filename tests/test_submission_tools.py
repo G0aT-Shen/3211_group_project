@@ -1,11 +1,16 @@
 """Release-gate regression checks protect against incomplete final packaging."""
 import importlib.util
+import contextlib
 import hashlib
+import io
 import json
 from pathlib import Path
+import shutil
 import struct
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 SPEC = importlib.util.spec_from_file_location('submission_check', Path(__file__).resolve().parents[1] / 'tools/check_submission.py')
@@ -43,6 +48,56 @@ def manifest(root):
 
 
 class SubmissionTests(unittest.TestCase):
+    def test_nested_mp4_is_reported_as_invalid_without_crashing(self):
+        """Malformed box nesting cannot crash either duration parsing or the release gate."""
+        payload = mp4(1)
+        for _ in range(1100):
+            payload = struct.pack('>I4s', len(payload) + 8, b'moov') + payload
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path = root / 'output/demo/system_demo.mp4'
+            path.parent.mkdir(parents=True)
+            path.write_bytes(payload)
+            self.assertIsNone(checker.mp4_duration(path))
+            self.assertTrue(any('Invalid or excessive duration' in issue for issue in checker.check(root)))
+
+    def test_mp4_extended_and_version_one_headers_still_work(self):
+        """Legal 64-bit box sizes, v1 timestamps and end-of-file sizes remain supported."""
+        body = b'\x01' + b'\0' * 19 + struct.pack('>IQ', 1000, 124000)
+        mvhd = struct.pack('>I4sQ', 1, b'mvhd', len(body) + 16) + body
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'valid.mp4'
+            for payload in [mp4(124), struct.pack('>I4s', 0, b'moov') + mvhd]:
+                path.write_bytes(payload)
+                self.assertEqual(checker.mp4_duration(path), 124)
+
+    def test_draft_archive_preserves_authoring_tools_and_runtime_sources(self):
+        """The extracted archive contains the documented regeneration entry points."""
+        source_root = Path(__file__).resolve().parents[1]
+        spec = importlib.util.spec_from_file_location('submission_packager', source_root / 'tools/package_submission.py')
+        packager = importlib.util.module_from_spec(spec)
+        with patch.dict(sys.modules, {'check_submission': checker}):
+            spec.loader.exec_module(packager)
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / 'source'
+            root.mkdir()
+            shutil.copyfile(source_root / 'main.py', root / 'main.py')
+            for package in ['model', 'controller', 'cli', 'storage', 'view', 'tests', 'tools']:
+                shutil.copytree(source_root / package, root / package,
+                                ignore=shutil.ignore_patterns('__pycache__'))
+            with patch.object(packager, 'ROOT', root), \
+                    patch.object(packager, 'check', return_value=['Test fixture: pending review']), \
+                    patch.object(sys, 'argv', ['package_submission.py', '--draft']), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(packager.main(), 0)
+            extracted = Path(folder) / 'extracted'
+            with zipfile.ZipFile(next((root / 'submission').glob('*.zip'))) as archive:
+                archive.extractall(extracted)
+            for name in ['build_slides.mjs', 'render_documents.py', 'render_demo_frames.py', 'encode_demo.swift']:
+                self.assertEqual((extracted / 'tools' / name).read_bytes(), (source_root / 'tools' / name).read_bytes())
+            self.assertTrue((extracted / 'main.py').is_file())
+            self.assertTrue((extracted / 'REVIEW_DRAFT_NOT_FINAL.txt').is_file())
+
     def test_coverage_counts_unreported_source_as_missed(self):
         """A trace version that omits a .cover file must not crash the report."""
         with tempfile.TemporaryDirectory() as folder:

@@ -3,11 +3,18 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import stat
 import tempfile
 from model import PIMManager
 from model.exceptions import StorageError, ValidationError
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
+
+
+def _read_opener(path, flags):
+    # Opening a FIFO must not wait for a writer. Reject symlink replacements
+    # between path validation and open on platforms providing O_NOFOLLOW.
+    return os.open(path, flags | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOFOLLOW", 0))
 
 
 def pim_path(path: str | Path) -> Path:
@@ -69,7 +76,9 @@ class Storage:
     def load(path: str | Path) -> PIMManager:
         target = pim_path(path)
         try:
-            with target.open("rb") as stream:
+            with open(target, "rb", opener=_read_opener) as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    raise StorageError("A .pim input must be a regular file")
                 payload = stream.read(MAX_FILE_BYTES + 1)
             if len(payload) > MAX_FILE_BYTES:
                 raise StorageError("File exceeds the 10 MiB limit")

@@ -91,11 +91,14 @@ def presentation_issues(root):
 
 def mp4_duration(path):
     """Read mvhd duration from an ISO base media file without external libraries."""
-    def scan(stream, start, end):
+    def scan(stream, start, end, in_moov=False):
         offset = start
         while offset + 8 <= end:
             stream.seek(offset)
-            size, kind = struct.unpack('>I4s', stream.read(8))
+            box_header = stream.read(8)
+            if len(box_header) != 8:
+                return None
+            size, kind = struct.unpack('>I4s', box_header)
             header = 8
             if size == 1:
                 data = stream.read(8)
@@ -108,10 +111,13 @@ def mp4_duration(path):
             if size < header or offset + size > end:
                 return None
             if kind == b'moov':
-                result = scan(stream, offset + header, offset + size)
+                # moov is a top-level box; nested moov boxes are malformed.
+                if in_moov:
+                    return None
+                result = scan(stream, offset + header, offset + size, in_moov=True)
                 if result is not None:
                     return result
-            if kind == b'mvhd':
+            if kind == b'mvhd' and in_moov:
                 data = stream.read(min(size - header, 32))
                 if len(data) < 20:
                     return None
@@ -124,8 +130,11 @@ def mp4_duration(path):
                 return duration / scale if scale else None
             offset += size
         return None
-    with path.open('rb') as stream:
-        return scan(stream, 0, path.stat().st_size)
+    try:
+        with path.open('rb') as stream:
+            return scan(stream, 0, path.stat().st_size)
+    except (OSError, ValueError, struct.error):
+        return None
 
 
 def check(root=ROOT):

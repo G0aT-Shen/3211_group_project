@@ -26,6 +26,8 @@ The report includes every model .py file. It excludes CLI, controller, storage, 
 
 Tests include domain invalid-input checks, round-trips of all record types, ID persistence after deletion, search precedence, atomic file replacement failure, cancelled confirmations and a real subprocess CLI workflow. .github/workflows/tests.yml configures Python 3.9/3.11/3.12 on Ubuntu. A local pass does not prove a hosted CI run has passed.
 
+tests/test_review_fixes.py covers interrupted IO and allocation, the last usable ID and exhaustion round-trips, and rejecting a real named pipe without blocking. Submission-tool tests also check malformed MP4 nesting, valid extended headers and authoring-tool preservation after archive extraction.
+
 ## 4. Source navigation and extension
 model contains all domain types, shared field schemas, collection rules and search AST/parser. controller exposes compatibility imports. cli parses shell-like commands and orchestrates model/storage/view. storage performs bounded strict JSON IO; view formats text. main.py starts the REPL.
 
@@ -47,7 +49,9 @@ The builder defaults to the current user's bundled authoring runtime. For anothe
 python3 tools/check_submission.py
 python3 tools/package_submission.py
 ```
-The submission checker reports missing human deliverables and fails until they are present and unresolved placeholders are resolved. It inspects the final PPTX slide/notes text, verifies the displayed member list against team_members.json, and checks the build manifest so an older PDF or deck cannot be silently mixed with new configuration or coverage data. Rebuild the pair after changing any recorded input or editing either output. The packaging tool includes the member configuration and manifest and refuses to label an incomplete archive as final. It excludes .git, caches, local .pim files and private build outputs. Group members must complete the official Honour Declaration, agree contributions, verify lecture formatting and record the required presentations.
+The submission checker reports missing human deliverables and fails until they are present and unresolved placeholders are resolved. It inspects the final PPTX slide/notes text, verifies the displayed member list against team_members.json, and checks the build manifest so an older PDF or deck cannot be silently mixed with new configuration or coverage data. Rebuild the pair after changing any recorded input or editing either output. The packaging tool includes the member configuration, manifest and all .py/.mjs/.swift authoring tools directly under tools/, and refuses to label an incomplete archive as final. It excludes .git, caches, local .pim files and private build outputs. Group members must complete the official Honour Declaration, agree contributions, verify lecture formatting and record the required presentations.
+
+The checked-in PDF/PPTX files and coverage_report.txt are the earlier authoring snapshot. The 1 October 2026 code-review fixes update executable sources, regression tests and Markdown manuals. Before final submission, regenerate the coverage report and document/presentation exports using the bundled authoring runtime, then record the team's real review results.
 
 ## 6. Data operations and known boundaries
 Saving flushes and fsyncs a temporary file, then replaces the destination. Failure preserves prior target bytes and attempts to remove the temporary artifact. If the operating system also refuses cleanup, the error reports the temporary path for later manual removal. Path inspection and cleanup errors are translated into StorageError so the CLI remains usable. Files are not encrypted. Single-process usage is assumed; no advisory locking or cross-machine time conversion is implemented. Application limits and local timestamp interpretation are explicit in the SRS/user manual.

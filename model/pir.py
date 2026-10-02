@@ -8,6 +8,7 @@ import re
 from typing import Any
 
 from .exceptions import ValidationError
+from .ids import validate_record_id
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M"
 
@@ -63,8 +64,8 @@ class PIR(ABC):
         raise AttributeError("PIR fields cannot be deleted; use PIMManager.edit_pir")
 
     def __init__(self, record_id: int | None = None) -> None:
-        if record_id is not None and (not isinstance(record_id, int) or isinstance(record_id, bool) or record_id < 1):
-            raise ValidationError("ID must be a positive integer")
+        if record_id is not None:
+            validate_record_id(record_id)
         self._id = record_id
 
     def get_id(self) -> int | None:

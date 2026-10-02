@@ -22,9 +22,10 @@ def main():
     for package in ['model', 'controller', 'cli', 'storage', 'view', 'tests']:
         files.extend((ROOT / package).glob('*.py'))
     for name in ['main.py','README.md','README.zh-CN.md','deploy_readme.md','deploy_readme.zh-CN.md','pyproject.toml','LICENSE',
-                 'coverage_report.txt','coverage_report.pdf','requirements_coverage.md','requirements_coverage.pdf','tools/check_coverage.py',
-                 'tools/check_submission.py','tools/package_submission.py','tools/demo_session.py']:
+                 'coverage_report.txt','coverage_report.pdf','requirements_coverage.md','requirements_coverage.pdf']:
         files.append(ROOT / name)
+    for extension in ['*.py', '*.mjs', '*.swift']:
+        files.extend((ROOT / 'tools').glob(extension))
     files.append(ROOT / 'docs/review_status.example.json')
     files.append(ROOT / 'docs/team_members.json')
     files.extend((ROOT / 'docs').glob('*.md'))
