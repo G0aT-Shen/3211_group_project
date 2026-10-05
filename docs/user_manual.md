@@ -1,8 +1,10 @@
 # User Manual
-COMP3211 PIM | Version 0.2 | macOS | 18 September 2026
+COMP3211 PIM | Version 0.2 | macOS / Windows | 5 October 2026
 
 ## 1. Start and exit
 Open Terminal in the project directory and run python3 main.py. The application prints pim> when it is ready. Enter help for command examples. No third-party installation is required. Data is in memory until you save it. exit or quit ends the program; unsaved changes require y/yes confirmation. A blank answer or n cancels. Ctrl-C cancels an input line or running command and returns to the prompt. After interrupting a command that can change data, inspect the records and save again before exiting: a save may already have committed before the interrupt arrived, and the application conservatively retains the unsaved flag. EOF ends input and warns if unsaved data remains.
+
+On Windows with the Python launcher installed, run `py -3 main.py` in PowerShell. If redirected output or a terminal cannot encode a stored character, the application displays an ASCII escape and continues. Saved files retain the original Unicode text.
 
 ## 2. Create records
 Commands use English keywords and accept Unicode data. Put multiword text in double or single quotes. Keywords and option names are case-insensitive; stored text keeps its original case.

@@ -1,8 +1,8 @@
 # Developer Manual
-COMP3211 PIM | Version 0.2 | macOS | 18 September 2026
+COMP3211 PIM | Version 0.2 | macOS / Windows | 5 October 2026
 
 ## 1. Environment
-Platform documented: macOS. Verified interpreters: CPython 3.9.6 and CPython 3.12.14. Python 3.11 is included in the CI configuration but was not installed locally for this revision. The course requires Java or Python, not a particular Python version.
+The 5 October review was run on Windows with CPython 3.12.10 and 3.12.14. Earlier revisions were verified on macOS with CPython 3.9.6 and 3.12.14. Python 3.9 and 3.11 are covered by the CI configuration but were not installed locally for this revision. The course requires Java or Python, not a particular Python version.
 
 Use VS Code and open the repository folder. Select an installed Python interpreter in the Python extension, or use Terminal without any IDE. The application and automated tests use only Python standard libraries; pip install is unnecessary. pyproject.toml is metadata; this repository runs directly from source, not as a published installable distribution.
 
@@ -20,11 +20,15 @@ Python requires no separate binary build. compileall checks syntax. In pdb, use 
 python3 -m unittest discover -v
 python3 tools/check_coverage.py
 ```
+On Windows with the Python launcher installed, replace `python3` with `py -3` in these commands. A missing `python` command on PATH does not require installing project dependencies.
+
 The first command returns nonzero on failure. The coverage tool also runs the suite, generates annotated .coverage/model.*.cover files and rewrites coverage_report.txt at the source root. It uses stdlib trace with show_missing=True and explicitly counts executed plus missed executable lines. Never use the old summary command as proof of 100%: without missing-line analysis it counts only hit lines.
 
-The report includes every model .py file. It excludes CLI, controller, storage, view and test lines from the model denominator, but tests still exercise those components. Abstract/protocol declarations remain in the denominator. No branch-coverage claim is made. Changes in Python bytecode/source analysis can slightly alter line denominators across versions.
+The report includes every model .py file. It excludes CLI, controller, storage, view and test lines from the model denominator, but tests still exercise those components. Tracing selects model files by path, so an unrelated package's `__init__.py` cannot hide the model's package initialization. Abstract/protocol declarations remain in the denominator. No branch-coverage claim is made. Changes in Python bytecode/source analysis can slightly alter line denominators across versions. The report lists skipped tests separately.
 
-Tests include domain invalid-input checks, round-trips of all record types, ID persistence after deletion, search precedence, atomic file replacement failure, cancelled confirmations and a real subprocess CLI workflow. .github/workflows/tests.yml configures Python 3.9/3.11/3.12 on Ubuntu. A local pass does not prove a hosted CI run has passed.
+Tests include domain invalid-input checks, round-trips of all record types, ID persistence after deletion, search precedence, atomic file replacement failure, cancelled confirmations and a real subprocess CLI workflow. .github/workflows/tests.yml configures Python 3.9/3.11/3.12 on Ubuntu. The Windows results in this review came from local runs; a local pass does not prove a hosted CI run has passed.
+
+Windows runs skip the POSIX FIFO test and, only when the OS reports missing privileges, the real symlink test. A separate test always checks that storage rejects symlink paths for both save and load. Console regressions verify that limited output encodings preserve the session and saved Unicode, while search regressions cover literal trailing backslashes and malformed quotes.
 
 tests/test_review_fixes.py covers interrupted IO and allocation, the last usable ID and exhaustion round-trips, and rejecting a real named pipe without blocking. Submission-tool tests also check malformed MP4 nesting, valid extended headers and authoring-tool preservation after archive extraction.
 
@@ -51,7 +55,7 @@ python3 tools/package_submission.py
 ```
 The submission checker reports missing human deliverables and fails until they are present and unresolved placeholders are resolved. It inspects the final PPTX slide/notes text, verifies the displayed member list against team_members.json, and checks the build manifest so an older PDF or deck cannot be silently mixed with new configuration or coverage data. Rebuild the pair after changing any recorded input or editing either output. The packaging tool includes the member configuration, manifest and all .py/.mjs/.swift authoring tools directly under tools/, and refuses to label an incomplete archive as final. It excludes .git, caches, local .pim files and private build outputs. Group members must complete the official Honour Declaration, agree contributions, verify lecture formatting and record the required presentations.
 
-The checked-in PDF/PPTX files and coverage_report.txt are the earlier authoring snapshot. The 1 October 2026 code-review fixes update executable sources, regression tests and Markdown manuals. Before final submission, regenerate the coverage report and document/presentation exports using the bundled authoring runtime, then record the team's real review results.
+The checked-in PDF/PPTX files remain the earlier authoring snapshot. The 5 October 2026 code-review fixes update executable sources, regression tests, Markdown manuals and coverage_report.txt. Before final submission, regenerate the document/presentation exports using the authoring runtime, then record the team's real review results. PDF/demo authoring scripts use macOS fonts, PTY or AVFoundation; the Windows application tests do not verify those authoring dependencies.
 
 ## 6. Data operations and known boundaries
 Saving flushes and fsyncs a temporary file, then replaces the destination. Failure preserves prior target bytes and attempts to remove the temporary artifact. If the operating system also refuses cleanup, the error reports the temporary path for later manual removal. Path inspection and cleanup errors are translated into StorageError so the CLI remains usable. Files are not encrypted. Single-process usage is assumed; no advisory locking or cross-machine time conversion is implemented. Application limits and local timestamp interpretation are explicit in the SRS/user manual.

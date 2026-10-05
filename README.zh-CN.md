@@ -6,15 +6,17 @@ Python 标准库实现的命令行个人信息管理系统，支持文本、任�
 
 ## 运行与验证
 
-支持 Python 3.9+。已在 macOS 的 Python 3.9.6 和 3.12.14 验证，无运行时第三方依赖。
+支持 Python 3.9+，无运行时第三方依赖。本轮在 Windows 的 Python 3.12.10 和 3.12.14 验证；此前版本曾在 macOS 的 Python 3.9.6 和 3.12.14 验证。
 
-当前本地验证（2026 年 10 月 1 日代码审查修复）：Python 3.9.6 和 3.12.14 下均有 73 项自动化测试通过；最新测得模型行覆盖率 436/438（99.54%，包含未执行行）。草稿归档解压后也通过全部 73 项测试。仓库中的覆盖率文本、PDF 和 PPTX 仍为此前生成的快照，最终提交前请按开发手册重新生成。GitHub Actions 运行 `35303259313` 已在 Python 3.9、3.11 和 3.12 上通过更早版本的测试、覆盖率检查与 `compileall`。
+当前本地验证（2026 年 10 月 5 日代码审查修复）：两个 Windows 解释器均发现 83 项自动化测试，81 项通过、2 项因平台条件跳过，零失败、零错误；模型行覆盖率为 434/438（99.09%，包含未执行行），coverage_report.txt 单独列出跳过数量。PDF 和 PPTX 仍为此前生成的快照，最终提交前请按开发手册重新生成。现有 CI 矩阵在 Ubuntu 上运行 Python 3.9/3.11/3.12；本轮未运行远程 CI。
 
 ```bash
 python3 main.py
 python3 -m unittest discover -v
 python3 tools/check_coverage.py
 ```
+
+Windows 已安装 Python 启动器时，将上述 `python3` 替换为 `py -3`。
 
 ```text
 add text "Buy milk"

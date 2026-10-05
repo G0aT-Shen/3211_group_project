@@ -6,15 +6,17 @@ A command-line personal information management system built on the Python standa
 
 ## Run and verify
 
-Python 3.9+ is supported. Validated on macOS with Python 3.9.6 and 3.12.14, with no third-party runtime dependencies.
+Python 3.9+ is supported, with no third-party runtime dependencies. This revision was validated on Windows with Python 3.12.10 and 3.12.14; earlier revisions were validated on macOS with Python 3.9.6 and 3.12.14.
 
-Current local status (1 October 2026 code-review fixes): 73 automated tests pass on Python 3.9.6 and 3.12.14; fresh model line coverage is 436/438 (99.54%, including unexecuted lines). The extracted draft archive also passes all 73 tests. Checked-in coverage/PDF/PPTX artifacts remain the earlier authoring snapshot; regenerate them before final submission as described in the developer manual. GitHub Actions run `35303259313` passed an earlier revision's tests, coverage check, and `compileall` on Python 3.9, 3.11, and 3.12.
+Current local status (5 October 2026 code-review fixes): 83 automated tests collected, 81 passed and 2 platform-dependent tests skipped on both Windows interpreters, with no failures or errors. Fresh model line coverage is 434/438 (99.09%, including unexecuted lines); coverage_report.txt records skipped tests separately. PDF/PPTX artifacts remain the earlier authoring snapshot; regenerate them before final submission as described in the developer manual. The existing CI matrix covers Ubuntu with Python 3.9/3.11/3.12; hosted CI was not run during this review.
 
 ```bash
 python3 main.py
 python3 -m unittest discover -v
 python3 tools/check_coverage.py
 ```
+
+On Windows with the Python launcher installed, use `py -3` in place of `python3`.
 
 ```text
 add text "Buy milk"

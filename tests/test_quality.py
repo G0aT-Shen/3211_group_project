@@ -321,10 +321,34 @@ class StorageContractTests(unittest.TestCase):
             for name in ['', None, 'bad.txt', 'bad\x00.pim']:
                 with self.assertRaises(StorageError):
                     pim_path(name)
+
+    def test_symlink_paths_are_rejected_before_io(self):
+        """Both storage operations reject links even without OS symlink privileges."""
+        with patch('pathlib.Path.is_symlink', return_value=True):
+            with self.assertRaisesRegex(StorageError, 'Symlinks'):
+                Storage.load('link.pim')
+            with self.assertRaisesRegex(StorageError, 'Symlinks'):
+                Storage.save('link.pim', PIMManager())
+
+    def test_real_symlink_preserves_target(self):
+        """Reject real links without reading or replacing the referenced file."""
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'records.pim'
+            Storage.save(path, PIMManager(records()))
+            before = path.read_bytes()
             link = Path(folder) / 'link.pim'
-            link.symlink_to(path)
-            with self.assertRaises(StorageError):
+            try:
+                link.symlink_to(path)
+            except OSError as exc:
+                if getattr(exc, 'winerror', None) == 1314:
+                    self.skipTest('Windows symlink creation requires extra privileges')
+                raise
+            with self.assertRaisesRegex(StorageError, 'Symlinks'):
                 Storage.load(link)
+            with self.assertRaisesRegex(StorageError, 'Symlinks'):
+                Storage.save(link, PIMManager())
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(path.read_bytes(), before)
 
     def test_failure_does_not_truncate_existing_file(self):
         """If replacement fails, old bytes remain and the temporary file is removed."""

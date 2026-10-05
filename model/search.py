@@ -11,7 +11,9 @@ TEXT_FIELDS = {"type", "text", "description", "name", "address", "mobile"}
 TIME_FIELDS = {"deadline", "start", "start_time", "alarm"}
 OPERATORS = {"=": operator.eq, "!=": operator.ne, "<": operator.lt,
              "<=": operator.le, ">": operator.gt, ">=": operator.ge}
-TOKEN = re.compile(r'''\s*("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|&&|\|\||<=|>=|!=|[()!<>=]|[^\s()!<>=&|'"\\]+)''')
+# Match shlex quoting: single quotes keep every backslash literal, while a
+# double-quoted escape may span any character, including a newline.
+TOKEN = re.compile(r'''\s*("(?:\\[\s\S]|[^"\\])*"|'[^']*'|&&|\|\||<=|>=|!=|[()!<>=]|[^\s()!<>=&|'"\\]+)''')
 
 
 class SearchNode(ABC):

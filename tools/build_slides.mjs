@@ -59,6 +59,12 @@ const testMatch = coverage.match(/^Tests: (\d+), failures: 0, errors: 0$/m);
 const totalMatch = coverage.match(/^TOTAL\s+(\d+)\s+(\d+)\s+([\d.]+)%$/m);
 const pythonMatch = coverage.match(/^Python (\S+)$/m);
 if (!testMatch || !totalMatch || !pythonMatch) throw new Error('Regenerate a passing coverage_report.txt first.');
+const skippedMatch = coverage.match(/^Skipped: (.*)$/m);
+const skippedCount = skippedMatch ? Number(skippedMatch[1]) : 0;
+const testCount = Number(testMatch[1]);
+if (!Number.isSafeInteger(skippedCount) || skippedCount < 0 || skippedCount > testCount) {
+  throw new Error('Invalid skipped-test count in coverage_report.txt.');
+}
 const { Presentation, PresentationFile } = await import(pathToFileURL(artifactModule));
 const { finalizePresentation } = await import(pathToFileURL(path.join(skill,'container_tools/artifact_tool_utils.mjs')));
 const build=path.join(root,'tmp/slides');
@@ -114,7 +120,7 @@ text(s,'Failed validation preserves the original record.',64,595,1140,50,30,true
 s=slide('A lesson from boundary testing','Explain actual defects: 12 tests originally passed but print abc crashed, unknown edit reported success, quotes were lost. New tests prove boundary behavior. Old trace summary omitted missed lines; corrected coverage includes all model executable lines. Mention no score or correctness guarantee.');
 text(s,'Passing tests can leave interface defects undiscovered',64,178,1150,90,34,true);
 text(s,'Regression cases now cover invalid IDs, quoted searches,\nfailed edits and failed disk replacement.',64,309,1160,110,30);
-text(s,`${testMatch[1]} tests pass locally on Python ${pythonMatch[1]}.\nModel line coverage: ${totalMatch[1]} / ${totalMatch[2]} = ${totalMatch[3]}%.`,64,463,1160,105,32);
+text(s,`${testCount - skippedCount} tests passed, ${skippedCount} skipped on Python ${pythonMatch[1]}.\nModel line coverage: ${totalMatch[1]} / ${totalMatch[2]} = ${totalMatch[3]}%.`,64,463,1160,105,32);
 text(s,'Coverage measures execution, not a guarantee of correctness.',64,614,1150,46,25,false,'#596F7F');
 const candidate=path.join(build,'candidate.pptx');
 await (await PresentationFile.exportPptx(p)).save(candidate);
