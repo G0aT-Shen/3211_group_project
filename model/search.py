@@ -11,9 +11,9 @@ TEXT_FIELDS = {"type", "text", "description", "name", "address", "mobile"}
 TIME_FIELDS = {"deadline", "start", "start_time", "alarm"}
 OPERATORS = {"=": operator.eq, "!=": operator.ne, "<": operator.lt,
              "<=": operator.le, ">": operator.gt, ">=": operator.ge}
-# Match shlex quoting: single quotes keep every backslash literal, while a
-# double-quoted escape may span any character, including a newline.
-TOKEN = re.compile(r'''\s*("(?:\\[\s\S]|[^"\\])*"|'[^']*'|&&|\|\||<=|>=|!=|[()!<>=]|[^\s()!<>=&|'"\\]+)''')
+# Keep whole shell words, including concatenated quote fragments and escaped
+# syntax characters. Only unquoted, unescaped operators split a word.
+TOKEN = re.compile(r'''\s*(&&|\|\||<=|>=|!=|[()!<>=]|(?:[^\s()!<>=&|'"\\]|\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'[^']*')+)''')
 
 
 class SearchNode(ABC):
@@ -105,7 +105,7 @@ class SearchParser:
             field, op, value = take(), take(), take()
             if value in {"(", ")", "!", "&&", "||"} | set(OPERATORS):
                 raise SearchParseError("Missing comparison value; quote special characters")
-            if value[0] in "\"'":
+            if any(char in value for char in "\"'\\"):
                 try:
                     value = shlex.split(value)[0]
                 except ValueError as exc:

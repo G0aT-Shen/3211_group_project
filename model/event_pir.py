@@ -8,6 +8,7 @@ from .pir import PIR, _validate_required_text, format_datetime, parse_datetime
 
 
 class EventPIR(PIR):
+    __slots__ = ("description", "start_time", "alarm")
     type_name = "event"
 
     def __init__(self, record_id: int | None = None, description: str = "", start_time: datetime | str | None = None, alarm: datetime | str | None = None) -> None:

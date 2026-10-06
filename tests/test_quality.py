@@ -158,15 +158,40 @@ class ModelContractTests(unittest.TestCase):
             manager.delete_pir(1)
 
     def test_all_fields_edit_and_failed_edits_are_atomic(self):
-        """US6: every field supports edit; a failing multi-field edit changes nothing."""
+        """US6: edits change exactly the requested fields while preserving IDs and types."""
         manager = PIMManager(records())
-        for pir in manager.list_all():
-            for key, value in pir.get_fields().items():
-                new = '2026-12-01 12:00' if key in {'deadline', 'start_time', 'alarm'} else value + ' updated'
-                manager.edit_pir(pir.get_id(), key, new)
-                self.assertNotEqual(manager.get_pir(pir.get_id()).get_fields()[key], value)
-        manager.edit_pir(3, {'start': '2026-12-02'})
-        self.assertEqual(manager.get_pir(3).get_start_time(), datetime(2026, 12, 2))
+        expected = [
+            {'id': 1, 'type': 'text', 'text': 'Hello world && milk'},
+            {'id': 2, 'type': 'task', 'description': 'Submit Report',
+             'deadline': '2026-11-19T20:00:00'},
+            {'id': 3, 'type': 'event', 'description': 'Team meeting',
+             'start_time': '2026-10-12T09:00:00', 'alarm': '2026-10-12T08:30:00'},
+            {'id': 4, 'type': 'contact', 'name': 'Alice', 'address': 'Hong Kong',
+             'mobile': '+852 01234567'},
+        ]
+        edits = [
+            (1, 'text', '记得买牛奶', '记得买牛奶'),
+            (2, 'description', 'Submit final report', 'Submit final report'),
+            (2, 'deadline', '2026-12-01 12:00', '2026-12-01T12:00:00'),
+            (3, 'description', 'Project rehearsal', 'Project rehearsal'),
+            (3, 'start_time', '2026-12-02 10:00', '2026-12-02T10:00:00'),
+            (3, 'alarm', '2026-12-02 09:30', '2026-12-02T09:30:00'),
+            (4, 'name', '张三', '张三'),
+            (4, 'address', '深圳', '深圳'),
+            (4, 'mobile', '+86 00123456', '+86 00123456'),
+        ]
+        for record_id, field, value, persisted_value in edits:
+            with self.subTest(record_id=record_id, field=field):
+                updated = manager.edit_pir(record_id, field, value)
+                expected[record_id - 1][field] = persisted_value
+                self.assertEqual(updated.get_id(), record_id)
+                self.assertEqual(updated.get_type(), expected[record_id - 1]['type'])
+                self.assertEqual(manager.to_dict(),
+                                 {'schema_version': 1, 'next_id': 5, 'pirs': expected})
+        manager.edit_pir(3, {'start': '2026-12-03'})
+        expected[2]['start_time'] = '2026-12-03T00:00:00'
+        self.assertEqual(manager.to_dict(),
+                         {'schema_version': 1, 'next_id': 5, 'pirs': expected})
         before = manager.to_dict()
         for updates in [{}, {'description': 'changed', 'deadline': 'bad'}, {'unknown': 'x'}]:
             with self.assertRaises(ValidationError):
@@ -193,6 +218,24 @@ class SearchContractTests(unittest.TestCase):
                                         ('name', 'ALICE', [4]), ('address', 'hong kong', [4]), ('mobile', '0123', [4])]:
             node = SearchParser().parse(f'{field} contains "{value}"')
             self.assertEqual([p.get_id() for p in manager.search(node)], expected)
+        unicode_manager = PIMManager([
+            TextPIR(1, 'Straße 中文笔记'),
+            TaskPIR(2, 'Straße 项目报告', '2026-12-01'),
+            ContactPIR(3, 'Straße 张三', '深圳', '00123456'),
+        ])
+        for expression, expected in [
+            ('text contains STRASSE', [1]),
+            ('text contains 中文', [1]),
+            ('description contains STRASSE', [2]),
+            ('description contains 报告', [2]),
+            ('name contains STRASSE', [3]),
+            ('name contains 张三', [3]),
+            ('address contains 深圳', [3]),
+            ('text contains 深圳', []),
+        ]:
+            with self.subTest(expression=expression):
+                node = SearchParser().parse(expression)
+                self.assertEqual([p.get_id() for p in unicode_manager.search(node)], expected)
 
     def test_time_operators_on_every_time_field(self):
         """US7: before/after/equality and extended comparisons use dates, not text ordering."""
