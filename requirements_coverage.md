@@ -2,7 +2,7 @@
 
 Version 0.2, Revision 2 | 5 October 2026. Source: original Course Project Description, Appendix B, and docs/SRS.md. All 11 course user stories have implementation and automated acceptance evidence. This is requirement coverage, not a claim of 100% line coverage or a guaranteed grade. Open human approval/submission items are identified separately.
 
-Current verification: 88 tests passed with no failures, errors or skips on macOS with Python 3.9.6 and 3.12.14. The checked-in model line report was regenerated with Python 3.12.14: 439/443 executable lines (99.10%). Production and tool syntax compilation passed on both interpreters. This revision has not been run on Windows or hosted CI; earlier Windows results do not establish the status of this revision.
+Current verification: 89 tests passed with no failures, errors or skips on macOS with Python 3.9.6 and 3.12.14. The checked-in model line report was regenerated with Python 3.12.14: 439/443 executable lines (99.10%). Production and tool syntax compilation passed on both interpreters. This revision has not been run on Windows or hosted CI; earlier Windows results do not establish the status of this revision.
 
 | Course story | SRS requirements | Implementation evidence | Test evidence | Status |
 |---|---|---|---|---|
@@ -33,7 +33,7 @@ Current verification: 88 tests passed with no failures, errors or skips on macOS
 
 | Requirement | Evidence / acceptance check | Status |
 |---|---|---|
-| UR-06, NFR-03 errors/limits | CommandContractTests.test_invalid_commands; SearchContractTests.test_invalid_search_and_resource_limits; RegressionTests.test_invalid_ids_do_not_end_session | Implemented |
+| UR-06, NFR-03 errors/limits | CommandContractTests.test_invalid_commands; SearchContractTests.test_invalid_search_and_resource_limits; RegressionTests.test_invalid_ids_do_not_end_session; ConsoleEncodingTests.test_undecodable_input_is_rejected_without_losing_session | Implemented |
 | FR-13 help/exit/EOF/Ctrl-C | ReplContractTests.test_loop_eof_interrupt_and_domain_errors; test_confirmation_input_and_eof; test_cancelled_save_load_exit_keep_state | Implemented |
 | DR-01 datetime rules | ModelContractTests.test_dates_are_strict_and_minute_precision; ModelTests.test_timestamp_display_keeps_four_digit_years_at_calendar_boundaries; SearchContractTests.test_time_operators_on_every_time_field | Implemented |
 | DR-02 strict .pim schema/limits | ModelContractTests.test_strict_file_schema; StorageContractTests.test_invalid_files_and_extensions; test_size_limits_and_serialization_failure | Implemented |

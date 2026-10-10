@@ -2,7 +2,7 @@
 COMP3211 PIM | Version 0.2 | macOS / Windows | 5 October 2026
 
 ## 1. Environment
-The current 5 October requirements audit was run on macOS with CPython 3.9.6 and 3.12.14: all 88 tests passed on both, with no failures, errors or skips, and syntax compilation passed. The root coverage report was regenerated with 3.12.14 (439/443 executable model lines, 99.10%). The preceding review revision was verified on Windows with CPython 3.12.10 and 3.12.14. Windows and hosted CI were not run for the current revision. Python 3.11 is covered by the CI configuration but was not installed locally. The course requires Java or Python, not a particular Python version.
+The current revision (the 10 October input-decoding fix following the 5 October requirements audit) was run on macOS with CPython 3.9.6 and 3.12.14: all 89 tests passed on both, with no failures, errors or skips, and syntax compilation passed. The root coverage text report was regenerated with 3.12.14 (439/443 executable model lines, 99.10%). The preceding review revision was verified on Windows with CPython 3.12.10 and 3.12.14. Windows and hosted CI were not run for the current revision. Python 3.11 is covered by the CI configuration but was not installed locally. The course requires Java or Python, not a particular Python version.
 
 Use VS Code and open the repository folder. Select an installed Python interpreter in the Python extension, or use Terminal without any IDE. The application and automated tests use only Python standard libraries; pip install is unnecessary. pyproject.toml is metadata; this repository runs directly from source, not as a published installable distribution.
 

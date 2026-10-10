@@ -37,3 +37,25 @@ class ConsoleEncodingTests(unittest.TestCase):
                 self.assertEqual(saved['pirs'][0], snapshot['pirs'][0])
                 self.assertEqual(saved['pirs'][1]['text'], 'unsaved')
                 self.assertEqual(saved['next_id'], 3)
+
+    def test_undecodable_input_is_rejected_without_losing_session(self):
+        """Undecodable input bytes produce an error, not a traceback; unsaved records survive."""
+        # \xe9 and \xff are invalid in both encodings. The \xff line answers the exit
+        # prompt, which must cancel the exit instead of discarding the unsaved record.
+        commands = b'add text kept\nadd text "caf\xe9"\nexit\n\xff\nprint all\nsave kept.pim\nexit\n'
+        for encoding in ('ascii', 'utf-8'):
+            with self.subTest(encoding=encoding), tempfile.TemporaryDirectory() as folder:
+                result = subprocess.run(
+                    [sys.executable, str(ROOT / 'main.py')],
+                    input=commands, capture_output=True, cwd=folder, timeout=10,
+                    env=dict(os.environ, PYTHONIOENCODING=f'{encoding}:strict'))
+                self.assertEqual(result.returncode, 0, result.stderr.decode(errors='replace'))
+                self.assertEqual(result.stderr, b'')
+                output = result.stdout.decode(encoding)
+                self.assertIn('Error: Text content must be valid UTF-8 text', output)
+                self.assertIn('Exit cancelled.', output)
+                self.assertIn('#1 [text] kept', output)
+                self.assertIn('Goodbye.', output)
+                saved = json.loads((Path(folder) / 'kept.pim').read_text(encoding='utf-8'))
+                self.assertEqual(saved['pirs'], [{'id': 1, 'type': 'text', 'text': 'kept'}])
+                self.assertEqual(saved['next_id'], 2)

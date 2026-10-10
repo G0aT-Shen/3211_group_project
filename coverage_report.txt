@@ -1,6 +1,6 @@
 Model line coverage (stdlib trace; includes unexecuted executable lines)
 Python 3.12.14
-Tests: 88, failures: 0, errors: 0
+Tests: 89, failures: 0, errors: 0
 Skipped: 0
 Scope: every .py file in model/. CLI/controller/storage/view/tests are excluded from denominator.
 Definition: executed executable lines / all executable lines identified by trace.

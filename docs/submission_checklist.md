@@ -16,7 +16,7 @@ Source includes the complete standard-library CLI and independent model. The cur
 
 ## Deliverable 4: unit tests (4 points)
 
-unittest tests describe behaviors and assert expected outcomes; regression and integration checks supplement model units. Current macOS runs passed all 88 tests on Python 3.9.6 and 3.12.14 without skips. coverage_report.txt and its PDF are at the source root and report 439/443 model lines (99.10%) from Python 3.12.14, including missed executable lines. The course does not specify a minimum line-coverage percentage. High coverage is evidence of execution, not a guarantee of correctness. Hosted CI and Windows were not run for the current revision.
+unittest tests describe behaviors and assert expected outcomes; regression and integration checks supplement model units. Current macOS runs passed all 89 tests on Python 3.9.6 and 3.12.14 without skips. coverage_report.txt and its PDF are at the source root and report 439/443 model lines (99.10%) from Python 3.12.14, including missed executable lines. The course does not specify a minimum line-coverage percentage. High coverage is evidence of execution, not a guarantee of correctness. Hosted CI and Windows were not run for the current revision.
 
 ## Deliverable 5: presentation (4 points)
 
