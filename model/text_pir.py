@@ -6,6 +6,7 @@ from .pir import PIR, _validate_required_text
 
 
 class TextPIR(PIR):
+    __slots__ = ("text",)
     type_name = "text"
 
     def __init__(self, record_id: int | None = None, text: str = "") -> None:

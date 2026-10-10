@@ -1,6 +1,6 @@
 # System Design and API Contracts
 
-COMP3211 PIM | Implementation revision 0.2 | 18 September 2026
+COMP3211 PIM | Implementation revision 0.2, Revision 2 | 5 October 2026
 
 ## 1. Architectural rationale
 
@@ -46,7 +46,7 @@ classDiagram
   Storage ..> PIMManager
 ```
 
-PIR fields: _id: int|None, type_name: str and _sealed: bool. None is allowed only on an unsaved draft. TextPIR adds text:str. TaskPIR adds description:str and deadline:datetime. EventPIR adds description:str, start_time:datetime and alarm:datetime. ContactPIR adds name:str, address:str and mobile:str. Objects freeze at the end of construction; edits construct replacements. get_fields/to_dict return new dictionaries.
+PIR fields: _id: int|None, type_name: str and _sealed: bool. None is allowed only on an unsaved draft. TextPIR adds text:str. TaskPIR adds description:str and deadline:datetime. EventPIR adds description:str, start_time:datetime and alarm:datetime. ContactPIR adds name:str, address:str and mobile:str. Objects freeze at the end of construction; edits construct replacements. The base and concrete classes use __slots__, so returned records have no writable instance __dict__ that could bypass validation. get_fields/to_dict return new dictionaries. This is an ordinary API immutability boundary, not a sandbox against deliberate low-level Python introspection.
 
 Manager fields: _pirs: dict[int,PIR] and _next_id:int. pirs is a read-only mapping view; next_id is a read-only property. add_pir returns a new identified record; it does not mutate the caller's unidentified draft. A failed construction/edit does not consume IDs or alter the mapping.
 
@@ -62,7 +62,7 @@ PIR(record_id:int|None=None): validates a positive integer or None; raises Valid
 
 TextPIR(record_id:int|None=None,text:str=''); get_text()->str. TaskPIR(record_id:int|None=None,description:str='',deadline:datetime|str|None=None); get_description()->str; get_deadline()->datetime. EventPIR(record_id:int|None=None,description:str='',start_time:datetime|str|None=None,alarm:datetime|str|None=None); get_description()->str; get_start_time()->datetime; get_alarm()->datetime. ContactPIR(record_id:int|None=None,name:str='',address:str='',mobile:str=''); get_name/get_address/get_mobile()->str. All constructors enforce required nonblank fields and raise ValidationError. All inherit serialization and implement get_fields and __str__.
 
-parse_datetime(value:Any)->datetime raises ValidationError for incorrect format/calendar/type/timezone/precision. format_datetime(value:datetime)->str formats minute precision. Stored dates use datetime.isoformat().
+parse_datetime(value:Any)->datetime raises ValidationError for incorrect format/calendar/type/timezone/precision. format_datetime(value:datetime)->str uses ISO formatting with a space and minute precision, including four-digit years on every platform. Stored dates use datetime.isoformat().
 
 PIRFactory.normalize_fields(type_name:str,fields:dict[str,Any],partial:bool=False)->dict[str,Any]: resolves start alias; rejects duplicates, unknown or missing fields; raises ValidationError. create(type_name:str,fields:dict[str,Any],record_id:int|None=None)->PIR validates then constructs. from_dict(data:dict[str,Any])->PIR requires persisted ID/type and the exact field set. These factory methods are static and raise ValidationError.
 
@@ -88,10 +88,10 @@ and_expr  := not_expr ( '&&' not_expr )*
 not_expr  := '!' not_expr | '(' expr ')' | condition
 condition := field operator value
 operator  := contains | = | != | < | <= | > | >=
-value     := quoted-string | bare-word | YYYY-MM-DD [HH:MM]
+value     := shell-word | YYYY-MM-DD [HH:MM]
 ```
 
-The tokenizer preserves quotes and rejects unmatched quotes or single &/| characters. The parser validates field/operator compatibility and dates before evaluating any record. Text equality/contains use Unicode casefold. Time comparisons use datetimes. Missing fields are False; for example deadline != 2027-01-01 selects tasks only, whereas !deadline = 2027-01-01 includes non-task records. Parentheses/negations are limited to 64 levels.
+The tokenizer preserves whole shell words, including adjacent quoted/unquoted fragments and backslash escapes. Unquoted, unescaped operators split tokens; quoted or escaped operators remain literal data. Unmatched quotes and single unescaped &/| characters are rejected. The parser validates field/operator compatibility and dates before evaluating any record. Text equality/contains use Unicode casefold. Time comparisons use datetimes. Missing fields are False; for example deadline != 2027-01-01 selects tasks only, whereas !deadline = 2027-01-01 includes non-task records. Parentheses/negations are limited to 64 levels.
 
 ## 5. Search-and-update collaboration
 

@@ -1,4 +1,4 @@
-"""Start the CLI with output safe for the terminal's configured encoding."""
+"""Start the CLI with console IO safe for the terminal's configured encoding."""
 import sys
 
 from cli import Repl
@@ -9,4 +9,8 @@ if __name__ == "__main__":
     # Escape unsupported characters for display without altering stored data.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="backslashreplace")
+    # Bytes invalid in the input encoding would otherwise end the session and lose
+    # unsaved records. Keep them as surrogates, which the model rejects as text.
+    if hasattr(sys.stdin, "reconfigure"):
+        sys.stdin.reconfigure(errors="surrogateescape")
     Repl().run()

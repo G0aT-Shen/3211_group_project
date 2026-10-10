@@ -1,6 +1,6 @@
 # Software Requirements Specification
 
-COMP3211 Personal Information Management System | Version 0.2, Revision 1 | 23 September 2026
+COMP3211 Personal Information Management System | Version 0.2, Revision 2 | 5 October 2026
 
 ## 1. Preface
 
@@ -17,6 +17,7 @@ The mandatory scope comes from the Fall 2026 Course Project Description, especia
 | 0.1 | 18 September 2026 | Established the initial scope from US1-US11 and the command-line PIM concept. |
 | 0.2 | 18 September 2026 | Added detailed functional, data, interface and quality requirements plus acceptance examples and traceability to tests. |
 | 0.2 Revision 1 | 23 September 2026 | Aligned chapter names and preface content with Lecture 04; added requirement rationale, verification methods, stakeholders, interfaces and validation criteria; corrected the documented English error prefix. |
+| 0.2 Revision 2 | 5 October 2026 | Rechecked all original course stories and code/test constraints; clarified the US7 basis for alarm semantics and synchronized the implementation evidence. |
 
 ### 1.3 Requirement conventions and approval status
 
@@ -42,7 +43,7 @@ Primary user: a person managing their own local information. Course assessors ev
 
 ### 2.4 Scope and constraints
 
-The system includes four PIR types, field-based and compound searching, modification, printing, deletion and file persistence. Accounts, GUI, online synchronization, multi-user access, background services and OS notification delivery are outside scope. An event alarm is a stored, printable and searchable timestamp; US4 does not explicitly require the application to trigger a notification.
+The system includes four PIR types, field-based and compound searching, modification, printing, deletion and file persistence. Accounts, GUI, online synchronization, multi-user access, background services and OS notification delivery are outside scope. An event alarm is a stored, printable and searchable timestamp: US4 requires this event field, and US7 explicitly describes a time stored in an alarm and its comparison operators. Neither story specifies notification delivery.
 
 The implementation language is Python and production code shall use only the Python standard library and project-local modules. The supported interpreter baseline is Python 3.9 or later. The application is designed for one user and one active process writing a given file at a time.
 
@@ -109,7 +110,7 @@ FR-02 (US2): `add text` shall require exactly one nonblank text value and preser
 
 FR-03 (US3): `add task` shall require a nonblank description and valid deadline. Rationale: both fields define a usable task. Verification: accept a valid task and reject missing, blank or invalid fields without changing the collection.
 
-FR-04 (US4): `add event` shall require a nonblank description, starting time and alarm time. The alarm shall be stored, printed and searchable. No ordering restriction between alarm and start shall be imposed because Appendix B specifies both fields but no relationship or active notification behavior. Verification: create, search, print and persist events with both timestamps.
+FR-04 (US4): `add event` shall require a nonblank description, starting time and alarm time. The alarm shall be stored, printed, editable and searchable, consistent with the stored time field in US7. No ordering restriction between alarm and start shall be imposed because Appendix B specifies both fields but no relationship or active notification behavior. Verification: create, edit, search, print and persist events with both timestamps.
 
 FR-05 (US5): `add contact` shall require nonblank name, address and mobile strings. Mobile values shall preserve international prefixes, punctuation and leading zeroes. Rationale: contact data must not be damaged by numeric conversion. Verification: round-trip representative contact values.
 

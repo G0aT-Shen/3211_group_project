@@ -8,6 +8,7 @@ from .pir import PIR, _validate_required_text, format_datetime, parse_datetime
 
 
 class TaskPIR(PIR):
+    __slots__ = ("description", "deadline")
     type_name = "task"
 
     def __init__(self, record_id: int | None = None, description: str = "", deadline: datetime | str | None = None) -> None:

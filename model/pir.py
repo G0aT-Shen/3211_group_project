@@ -44,12 +44,14 @@ def parse_datetime(value: Any) -> datetime:
 
 
 def format_datetime(value: datetime) -> str:
-    return value.strftime(DATETIME_FORMAT)
+    # isoformat guarantees four-digit years independently of platform strftime.
+    return value.isoformat(sep=" ", timespec="minutes")
 
 
 class PIR(ABC):
     """Abstract personal information record."""
 
+    __slots__ = ("_id", "_sealed")
     type_name = "pir"
 
     def __setattr__(self, name: str, value: Any) -> None:

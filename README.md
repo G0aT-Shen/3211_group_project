@@ -6,9 +6,9 @@ A command-line personal information management system built on the Python standa
 
 ## Run and verify
 
-Python 3.9+ is supported, with no third-party runtime dependencies. This revision was validated on Windows with Python 3.12.10 and 3.12.14; earlier revisions were validated on macOS with Python 3.9.6 and 3.12.14.
+Python 3.9+ is supported, with no third-party runtime dependencies. This revision was validated on macOS with Python 3.9.6 and 3.12.14. The preceding review revision was validated on Windows with Python 3.12.10 and 3.12.14.
 
-Current local status (5 October 2026 code-review fixes): 83 automated tests collected, 81 passed and 2 platform-dependent tests skipped on both Windows interpreters, with no failures or errors. Fresh model line coverage is 434/438 (99.09%, including unexecuted lines); coverage_report.txt records skipped tests separately. PDF/PPTX artifacts remain the earlier authoring snapshot; regenerate them before final submission as described in the developer manual. The existing CI matrix covers Ubuntu with Python 3.9/3.11/3.12; hosted CI was not run during this review.
+Current local status (10 October 2026 input-decoding fix, following the 5 October requirements audit): all 89 automated tests passed on both macOS interpreters, with no failures, errors or skips. Model line coverage on Python 3.12.14 is 439/443 (99.10%, including unexecuted lines). The requirements matrix covers all US1-US11 and the course code/test constraints. The root coverage text report was refreshed for this fix; documentation PDFs, including coverage_report.pdf, are from the 5 October audit and still state 88 tests, and presentation artifacts remain the earlier snapshot. The existing CI matrix covers Ubuntu with Python 3.9/3.11/3.12; hosted CI and Windows were not run for this revision.
 
 ```bash
 python3 main.py

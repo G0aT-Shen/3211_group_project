@@ -37,7 +37,7 @@ search name contains "Alice" || mobile contains "0123"
 search alarm = "2026-10-12 08:30"
 search 'text contains "hello world"'
 ```
-A search expression may be entered directly or inside a single outer pair of quotes. For nested quotations, use different quote styles as in the last example. Backslashes follow POSIX shlex rules; a literal Windows-style path should use single quotes. Quote text beginning with -- to preserve it as data: `add text "--todo"`, `edit 1 --text "--archived"` and `search text contains "--"` are valid. Unquoted option tokens still require a following value. Malformed quoted searches report an error and leave the current collection and session usable.
+A search expression may be entered directly or inside a single outer pair of quotes. For nested quotations, use different quote styles as in the last example. Backslashes follow POSIX shlex rules; a literal Windows-style path should use single quotes. Escaped spaces and adjacent quote fragments also work: `search text = buy\ milk` and `search text = 'buy '"milk"` both look for `buy milk`. Escaped operators are literal text. Quote text beginning with -- to preserve it as data: `add text "--todo"`, `edit 1 --text "--archived"` and `search text contains "--"` are valid. Unquoted option tokens still require a following value. Malformed quoted searches report an error and leave the current collection and session usable.
 
 Fields: type for all records; text for notes; description for tasks/events; deadline for tasks; start/start_time and alarm for events; name/address/mobile for contacts. Type supports = and !=. Text supports contains, = and !=, all case-insensitive using Unicode casefold. Dates support < <= > >= = !=. Empty contains "" matches every record that has that text field.
 

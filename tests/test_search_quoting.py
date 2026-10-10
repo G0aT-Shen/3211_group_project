@@ -13,6 +13,28 @@ from storage import Storage
 
 
 class SearchQuotingTests(unittest.TestCase):
+    def test_escaped_and_concatenated_words_match_command_text(self):
+        """Creation and search decode shell escapes and quote fragments consistently."""
+        cases = [(r'hello\ world', 'hello world'),
+                 ('"hello"world', 'helloworld'),
+                 ("'buy '\"milk\"", 'buy milk'),
+                 (r'hello\&\&world', 'hello&&world'),
+                 (r'C:\\work\\', 'C:\\work\\')]
+        for literal, expected in cases:
+            with self.subTest(literal=literal):
+                command = CommandParser().parse('add text ' + literal)
+                self.assertEqual(command.options['text'], expected)
+                node = SearchParser().parse('text = ' + literal)
+                self.assertTrue(node.evaluate(TextPIR(text=expected)))
+                self.assertFalse(node.evaluate(TextPIR(text=expected + ' different')))
+
+    def test_escaped_operators_remain_literal_inside_compound_search(self):
+        """Escaped ampersands belong to text; unescaped OR still combines criteria."""
+        node = SearchParser().parse(r'text = hello\&\&world || text = "other"')
+        for text, expected in [('hello&&world', True), ('other', True), ('world', False)]:
+            with self.subTest(text=text):
+                self.assertEqual(node.evaluate(TextPIR(text=text)), expected)
+
     def test_single_quoted_backslashes_are_literal(self):
         """Trailing backslashes and quoted syntax remain searchable record content."""
         for literal in [r"'C:\'", r"'C:\work\'", r"'\\server\share\'",
