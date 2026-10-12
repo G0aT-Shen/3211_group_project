@@ -10,6 +10,15 @@ from model.ids import MAX_ID_DIGITS
 # Shell words may concatenate quoted and unquoted fragments. Keep their raw
 # spelling so a quoted value beginning with -- is not mistaken for an option.
 SHELL_WORD = re.compile(r'''(?:[^ \t\r\n'"\\]|\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'[^']*')+''')
+# Only the POSIX shell set separates words, exactly like shlex and model.search.
+# Other whitespace is data, so trimming it off a command line would silently
+# shorten a value whose last character is one of those characters.
+SHELL_SEPARATORS = " \t\r\n"
+# One run of those same separators. It splits the command name from its tail and is
+# the only run stripped from the front of a line; Unicode whitespace is never a
+# separator, so it stays part of the word that contains it.
+SHELL_SEPARATOR_RUN = re.compile(f"[{SHELL_SEPARATORS}]+")
+_OPTION_FIELDS = frozenset().union(*FIELD_SCHEMAS.values())
 
 
 def split_arguments(tail: str) -> tuple[list[str], list[bool]]:
@@ -38,24 +47,31 @@ class CommandParser:
             raise InvalidCommandError("Command cannot be empty")
         if len(line) > 16384:
             raise InvalidCommandError("Command is too long (maximum 16384 characters)")
-        parts = line.strip().split(maxsplit=1)
+        # Only the POSIX separator set splits the command name from its tail.
+        # str.split(None, 1) also folds other Unicode whitespace into that run, which
+        # silently turned "save \xa0records.pim" into "save records.pim"; design
+        # section 4 makes that character part of the word and IR-01 compares paths
+        # exactly as typed. Leading separators only are stripped: a trailing one can
+        # be escaped data ("\ "), and trimming it left a lone backslash for shlex.
+        parts = SHELL_SEPARATOR_RUN.split(line.lstrip(SHELL_SEPARATORS), maxsplit=1)
         name = parts[0].lower()
         tail = parts[1] if len(parts) == 2 else ""
-        if name == "search":
-            if not tail.strip():
-                raise InvalidCommandError("Usage: search <expression>")
-            # Keep literal quotes; remove an optional single pair around the whole expression.
-            try:
-                tokens = shlex.split(tail)
-            except ValueError as exc:
-                raise InvalidCommandError(f"Unmatched command quote: {exc}") from exc
-            if len(tokens) == 1 and tail[0] in "\"'":
-                tail = tokens[0]
-            return Command(name, [tail])
+        if name == "search" and not tail.strip():
+            raise InvalidCommandError("Usage: search <expression>")
         try:
             args, quoted = split_arguments(tail)
         except ValueError as exc:
             raise InvalidCommandError(f"Unmatched command quote: {exc}") from exc
+        if name == "search":
+            # Keep literal quotes; remove only an optional outer pair so the search
+            # tokenizer performs the single documented shell-decoding pass. Handing
+            # it the shlex-decoded token would decode escapes a second time and make
+            # the quoted entry form select different records than the direct form.
+            stripped = tail.strip(SHELL_SEPARATORS)
+            if (len(args) == 1 and len(stripped) >= 2
+                    and stripped[0] in "\"'" and stripped[-1] == stripped[0]):
+                tail = stripped[1:-1]
+            return Command(name, [tail])
         if name == "quit":
             name = "exit"
         if name in {"help", "exit"}:
@@ -104,14 +120,13 @@ class CommandParser:
     def _options(self, tokens: list[str], quoted: list[bool]) -> dict[str, str]:
         options = {}
         index = 0
-        allowed = set().union(*map(set, FIELD_SCHEMAS.values()))
         while index < len(tokens):
             token = tokens[index]
             if not token.startswith("--"):
                 raise InvalidCommandError(f"Unexpected argument: {token}; quote text containing spaces")
             key = token[2:].lower().replace("-", "_")
             key = "start_time" if key == "start" else key
-            if key not in allowed:
+            if key not in _OPTION_FIELDS:
                 raise InvalidCommandError(f"Unknown field: {key}")
             if key in options:
                 raise InvalidCommandError(f"Duplicate field: {key}")

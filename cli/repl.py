@@ -23,6 +23,7 @@ Times are local and have minute precision; a date alone means 00:00.
 Search supports contains, = != < <= > >=, ! && || and parentheses.
 Text comparisons are case-insensitive; precedence is ! > && > ||.
 save defaults to pim.pim. Confirm with y before overwriting or discarding unsaved changes.
+Quote paths containing spaces; on Windows use single quotes around backslash paths.
 alarm is a stored record field; this application does not send OS notifications."""
 
 
@@ -72,6 +73,10 @@ class Repl:
             except PIMException as exc:
                 self.printer.print_error(exc)
 
+    def _report_success(self, message: str, *, dirty: bool) -> None:
+        self.dirty = dirty
+        self.printer.print_msg(message)
+
     def execute(self, command: Command) -> bool:
         name = command.name
         if name == "exit":
@@ -84,12 +89,10 @@ class Repl:
             self.printer.print_msg(HELP)
         elif name == "add":
             pir = self.manager.add_pir(PIRFactory.create(command.args[0], command.options))
-            self.dirty = True
-            self.printer.print_msg(f"Created PIR #{pir.get_id()}")
+            self._report_success(f"Created PIR #{pir.get_id()}", dirty=True)
         elif name == "edit":
             pir = self.manager.edit_pir(int(command.args[0]), command.options)
-            self.dirty = True
-            self.printer.print_msg(f"Updated PIR #{pir.get_id()}")
+            self._report_success(f"Updated PIR #{pir.get_id()}", dirty=True)
         elif name == "search":
             self.printer.print_all(self.manager.search(self.search_parser.parse(command.args[0])))
         elif name == "print":
@@ -97,8 +100,7 @@ class Repl:
             self.printer.print_all(self.manager.list_all() if target.lower() == "all" else [self.manager.get_pir(int(target))])
         elif name == "delete":
             self.manager.delete_pir(int(command.args[0]))
-            self.dirty = True
-            self.printer.print_msg(f"Deleted PIR #{command.args[0]}")
+            self._report_success(f"Deleted PIR #{command.args[0]}", dirty=True)
         elif name == "save":
             path = command.args[0] if command.args else "pim.pim"
             try:
@@ -109,8 +111,7 @@ class Repl:
                 self.printer.print_msg("Save cancelled.")
                 return False
             self.storage.save(path, self.manager)
-            self.dirty = False
-            self.printer.print_msg(f"Saved to {path}")
+            self._report_success(f"Saved to {path}", dirty=False)
         elif name == "load":
             # Read and validate before offering to replace the active model.
             loaded = self.storage.load(command.args[0])
@@ -118,8 +119,7 @@ class Repl:
                 self.printer.print_msg("Load cancelled.")
                 return False
             self.manager = loaded
-            self.dirty = False
-            self.printer.print_msg(f"Loaded {len(self.manager.pirs)} records")
+            self._report_success(f"Loaded {len(self.manager.pirs)} records", dirty=False)
         else:
             raise InvalidCommandError(f"Unknown command: {name}")
         return False

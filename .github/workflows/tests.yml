@@ -2,16 +2,22 @@ name: Python standard-library checks
 on: [push, pull_request]
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python: ['3.9', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m unittest discover -v
-      - run: python tools/check_coverage.py
-      - run: python -m compileall -q model controller cli storage view main.py
+      - run: python -X utf8 -m unittest discover -v
+      - if: runner.os == 'Windows'
+        shell: cmd
+        run: run_windows.cmd --check
+      - if: runner.os != 'Windows'
+        run: python -X utf8 tools/check_coverage.py
+      - if: runner.os != 'Windows'
+        run: python -X utf8 -m compileall -q model controller cli storage view tests tools main.py

@@ -29,8 +29,8 @@ class AcceptanceTests(unittest.TestCase):
                 'delete 2', f'save "{path}"', f'load "{path}"',
                 'add text afterload', f'save "{path}"', 'y', 'exit',
             ]
-            result = subprocess.run([sys.executable, str(ROOT / 'main.py')], input='\n'.join(commands) + '\n',
-                                    text=True, capture_output=True, cwd=folder, timeout=15)
+            result = subprocess.run([sys.executable, '-X', 'utf8', str(ROOT / 'main.py')], input='\n'.join(commands) + '\n',
+                                    text=True, encoding='utf-8', capture_output=True, cwd=folder, timeout=15)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stderr, '')
             self.assertEqual(result.stdout.count('Error:'), 3)
@@ -54,9 +54,9 @@ class AcceptanceTests(unittest.TestCase):
 
             second_commands = [f'load "{all_types}"', 'print all',
                                'add text "after restart"', f'save "{restored}"', 'exit']
-            second = subprocess.run([sys.executable, str(ROOT / 'main.py')],
+            second = subprocess.run([sys.executable, '-X', 'utf8', str(ROOT / 'main.py')],
                                     input='\n'.join(second_commands) + '\n',
-                                    text=True, capture_output=True, cwd=folder, timeout=15)
+                                    text=True, encoding='utf-8', capture_output=True, cwd=folder, timeout=15)
             self.assertEqual(second.returncode, 0, second.stderr)
             self.assertEqual(second.stderr, '')
             self.assertNotIn('Error:', second.stdout)

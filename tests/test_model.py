@@ -3,7 +3,7 @@ from datetime import datetime
 
 from model import (ContactPIR, EventPIR, PIR, PIMManager, TaskPIR, TextPIR,
                    ValidationError)
-from model.pir import format_datetime
+from model.pir import format_datetime, parse_datetime
 
 
 class ModelTests(unittest.TestCase):
@@ -79,6 +79,22 @@ class ModelTests(unittest.TestCase):
                 self.assertEqual(str(event).count(expected), 2)
                 self.assertEqual(PIR.from_dict(task.to_dict()).get_deadline(), value)
                 self.assertEqual(PIR.from_dict(event.to_dict()).get_alarm(), value)
+
+    def test_datetime_formats_preserve_minute_precision_and_calendar_validation(self):
+        """The optimized parser accepts the four existing forms without broadening ISO syntax."""
+        for value in (datetime(1, 1, 1, 9, 5), datetime(2000, 2, 29, 9, 5),
+                      datetime(9999, 12, 31, 9, 5)):
+            for text in (value.isoformat(timespec='minutes'), value.isoformat(timespec='seconds'),
+                         value.isoformat(sep=' ', timespec='minutes')):
+                with self.subTest(text=text):
+                    self.assertEqual(parse_datetime('  ' + text + '\t'), value)
+            self.assertEqual(parse_datetime(value.date().isoformat()), value.replace(hour=0, minute=0))
+        for text in ('2026-01-01 09:05:00', '2026-01-01T09:05:01',
+                     '2026-01-01T09:05:00.000', '2026-01-01T09:05Z',
+                     '2026-01-01T09:05+00:00', '20260101', '2026-W01-1',
+                     '2026-1-1', '２０２６-01-01', '1900-02-29', '0000-01-01'):
+            with self.subTest(text=text), self.assertRaises(ValidationError):
+                parse_datetime(text)
 
 
 if __name__ == "__main__":

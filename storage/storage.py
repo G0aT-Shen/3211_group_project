@@ -2,13 +2,32 @@
 from __future__ import annotations
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import stat
 import tempfile
 from model import PIMManager
 from model.exceptions import StorageError, ValidationError
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
+WINDOWS = os.name == "nt"
+# Windows treats these basenames as devices even when an extension is present.
+WINDOWS_DEVICES = {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"} | {
+    prefix + digit for prefix in ("COM", "LPT") for digit in "123456789¹²³"
+}
+
+
+def _validate_windows_path(path: str) -> None:
+    native = PureWindowsPath(path)
+    if native.drive.startswith(("\\\\.\\", "\\\\?\\")):
+        raise StorageError("Windows device and extended namespace paths cannot be used as .pim files")
+    for part in native.parts:
+        if part == native.anchor or part == "..":
+            continue
+        if (part.endswith((" ", "."))
+                or any(character in '<>:"|?*' or ord(character) < 32 for character in part)):
+            raise StorageError("Invalid Windows file path component")
+        if part.split(".", 1)[0].rstrip(" ").upper() in WINDOWS_DEVICES:
+            raise StorageError("Windows reserved device names cannot be used as .pim files")
 
 
 def _read_opener(path, flags):
@@ -20,6 +39,10 @@ def _read_opener(path, flags):
 def pim_path(path: str | Path) -> Path:
     if not isinstance(path, (str, Path)) or not str(path).strip() or "\x00" in str(path):
         raise StorageError("Invalid file path")
+    if WINDOWS:
+        # Validate before exists/is_symlink/open: CON.pim can otherwise open a
+        # console device and block before the regular-file check gets a chance.
+        _validate_windows_path(str(path))
     target = Path(path)
     if target.suffix.lower() != ".pim":
         raise StorageError("File extension must be .pim")
@@ -63,7 +86,7 @@ class Storage:
                 os.fsync(stream.fileno())
             os.replace(temporary, target)
             temporary = None
-        except (OSError, ValueError, UnicodeError, ValidationError) as exc:
+        except (OSError, ValueError, ValidationError) as exc:
             raise StorageError(f"Could not save {target}: {exc}") from exc
         finally:
             if temporary is not None:
@@ -84,5 +107,5 @@ class Storage:
                 raise StorageError("File exceeds the 10 MiB limit")
             data = json.loads(payload.decode("utf-8"), object_pairs_hook=unique_object, parse_constant=reject_constant)
             return PIMManager.from_dict(data)
-        except (OSError, UnicodeError, ValueError, ValidationError, RecursionError) as exc:
+        except (OSError, ValueError, ValidationError, RecursionError) as exc:
             raise StorageError(f"Could not read .pim file {target}: {exc}") from exc

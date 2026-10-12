@@ -18,28 +18,22 @@ def main():
     destination.mkdir(exist_ok=True)
     stamp = datetime.now().strftime('%Y%m%d-%H%M%S')
     path = destination / f'PIM_{"REVIEW_DRAFT" if args.draft else "FINAL"}_{stamp}.zip'
-    files = []
-    for package in ['model', 'controller', 'cli', 'storage', 'view', 'tests']:
-        files.extend((ROOT / package).glob('*.py'))
-    for name in ['main.py','README.md','README.zh-CN.md','deploy_readme.md','deploy_readme.zh-CN.md','pyproject.toml','LICENSE',
-                 'coverage_report.txt','coverage_report.pdf','requirements_coverage.md','requirements_coverage.pdf']:
-        files.append(ROOT / name)
-    for extension in ['*.py', '*.mjs', '*.swift']:
-        files.extend((ROOT / 'tools').glob(extension))
-    files.append(ROOT / 'docs/review_status.example.json')
-    files.append(ROOT / 'docs/team_members.json')
-    files.extend((ROOT / 'docs').glob('*.md'))
-    files.extend((ROOT / 'docs').glob('*.mermaid'))
-    files.extend((ROOT / 'output/pdf').glob('*.pdf'))
-    files.extend((ROOT / 'output/presentation').glob('*.pdf'))
-    files.extend((ROOT / 'output/presentation').glob('*.pptx'))
-    files.append(ROOT / 'output/presentation/build_manifest.json')
-    files.extend((ROOT / 'output/demo').glob('*.mp4'))
-    files.extend((ROOT / 'output/demo').glob('*.json'))
+    # Explicit patterns keep local records, credentials and caches out of archives.
+    patterns = [f'{package}/*.py' for package in ('model', 'controller', 'cli', 'storage', 'view', 'tests')]
+    patterns += [
+        'main.py', 'run_windows.cmd', 'README.md', 'README.zh-CN.md', 'deploy_readme.md', 'deploy_readme.zh-CN.md',
+        'pyproject.toml', '.gitattributes', 'LICENSE', 'coverage_report.txt', 'coverage_report.pdf',
+        'requirements_coverage.md', 'requirements_coverage.pdf',
+        'tools/*.py', 'tools/*.mjs', 'tools/*.swift',
+        'docs/review_status.example.json', 'docs/team_members.json', 'docs/*.md', 'docs/*.mermaid',
+        'output/pdf/*.pdf', 'output/presentation/*.pdf', 'output/presentation/*.pptx',
+        'output/presentation/build_manifest.json', 'output/demo/*.mp4', 'output/demo/*.json',
+        '.github/workflows/*.yml',
+    ]
+    files = {source for pattern in patterns for source in ROOT.glob(pattern) if source.is_file()}
     with zipfile.ZipFile(path,'x',compression=zipfile.ZIP_DEFLATED) as archive:
-        for source in sorted(set(files)):
-            if source.is_file():
-                archive.write(source, str(source.relative_to(ROOT)))
+        for source in sorted(files):
+            archive.write(source, source.relative_to(ROOT).as_posix())
         if args.draft:
             archive.writestr('REVIEW_DRAFT_NOT_FINAL.txt', 'Open submission items:\n' + '\n'.join(issues))
         else:

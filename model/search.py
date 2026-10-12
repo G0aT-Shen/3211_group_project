@@ -12,8 +12,14 @@ TIME_FIELDS = {"deadline", "start", "start_time", "alarm"}
 OPERATORS = {"=": operator.eq, "!=": operator.ne, "<": operator.lt,
              "<=": operator.le, ">": operator.gt, ">=": operator.ge}
 # Keep whole shell words, including concatenated quote fragments and escaped
-# syntax characters. Only unquoted, unescaped operators split a word.
-TOKEN = re.compile(r'''\s*(&&|\|\||<=|>=|!=|[()!<>=]|(?:[^\s()!<>=&|'"\\]|\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'[^']*')+)''')
+# syntax characters. Only unquoted, unescaped operators split a word. The
+# separator set is the POSIX shell set used by shlex and cli.command_parser,
+# not the Unicode-aware \s, so searching tokenizes exactly like creation.
+TOKEN = re.compile(r'''[ \t\r\n]*(&&|\|\||<=|>=|!=|[()!<>=]|(?:[^ \t\r\n()!<>=&|'"\\]|\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'[^']*')+)''')
+# The same POSIX set separates words here. Whitespace outside that set belongs to
+# a word even at the end of the expression, so trimming it would silently change
+# the literal that is compared (cli.command_parser applies the same rule).
+SHELL_SEPARATORS = " \t\r\n"
 
 
 class SearchNode(ABC):
@@ -25,9 +31,9 @@ class SearchNode(ABC):
 class ComparisonNode(SearchNode):
     def __init__(self, field: str, op: str, value: str) -> None:
         self.field, self.op = field.lower(), op.lower()
-        if self.field not in TEXT_FIELDS | TIME_FIELDS:
+        if self.field not in TEXT_FIELDS and self.field not in TIME_FIELDS:
             raise SearchParseError(f"Unknown search field: {field}")
-        allowed = set(OPERATORS) if self.field in TIME_FIELDS else {"contains", "=", "!="}
+        allowed = OPERATORS if self.field in TIME_FIELDS else {"contains", "=", "!="}
         if self.field == "type":
             allowed = {"=", "!="}
         if self.op not in allowed:
@@ -76,10 +82,16 @@ class SearchParser:
         if len(expression) > 8192:
             raise SearchParseError("Search expression is too long (maximum 8192 characters)")
         tokens, pos = [], 0
-        expression = expression.strip()
         while pos < len(expression):
             match = TOKEN.match(expression, pos)
             if not match:
+                # Separators left after the last token are padding, not a word, so they
+                # end the expression. They are ignored at the token boundary instead of
+                # being trimmed off the raw text beforehand: a backslash may have escaped
+                # the final one, and trimming it would leave a lone backslash that is
+                # reported as an unterminated quote and silently corrupts the literal.
+                if not expression[pos:].strip(SHELL_SEPARATORS):
+                    break
                 raise SearchParseError(f"Invalid character or unterminated quote at position {pos + 1}")
             tokens.append(match.group(1))
             pos = match.end()
@@ -103,7 +115,7 @@ class SearchParser:
 
         def condition():
             field, op, value = take(), take(), take()
-            if value in {"(", ")", "!", "&&", "||"} | set(OPERATORS):
+            if value in {"(", ")", "!", "&&", "||"} or value in OPERATORS:
                 raise SearchParseError("Missing comparison value; quote special characters")
             if any(char in value for char in "\"'\\"):
                 try:
@@ -128,19 +140,18 @@ class SearchParser:
                 return node
             return condition()
 
-        def parse_and(depth):
-            children = [parse_not(depth)]
-            while peek() == "&&":
+        def parse_chain(op, parse_operand, depth):
+            children = [parse_operand(depth)]
+            while peek() == op:
                 take()
-                children.append(parse_not(depth))
-            return children[0] if len(children) == 1 else LogicNode("&&", children)
+                children.append(parse_operand(depth))
+            return children[0] if len(children) == 1 else LogicNode(op, children)
+
+        def parse_and(depth):
+            return parse_chain("&&", parse_not, depth)
 
         def parse_or(depth):
-            children = [parse_and(depth)]
-            while peek() == "||":
-                take()
-                children.append(parse_and(depth))
-            return children[0] if len(children) == 1 else LogicNode("||", children)
+            return parse_chain("||", parse_and, depth)
 
         node = parse_or(0)
         if peek() is not None:

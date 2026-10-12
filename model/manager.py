@@ -20,10 +20,11 @@ class PIMManager:
         for pir in pirs or ():
             if not isinstance(pir, PIR) or pir.get_id() is None:
                 raise ValidationError("Existing records must be PIRs with IDs")
-            validate_record_id(pir.get_id())
-            if pir.get_id() in self._pirs:
-                raise ValidationError(f"Duplicate PIR ID: {pir.get_id()}")
-            self._pirs[pir.get_id()] = pir
+            record_id = pir.get_id()
+            validate_record_id(record_id)
+            if record_id in self._pirs:
+                raise ValidationError(f"Duplicate PIR ID: {record_id}")
+            self._pirs[record_id] = pir
         self._next_id = max(next_id, max(self._pirs, default=0) + 1)
 
     @property
@@ -62,9 +63,7 @@ class PIMManager:
         if isinstance(updates, str):
             updates = {updates: value}
         updates = PIRFactory.normalize_fields(pir.get_type(), updates, partial=True)
-        fields = pir.get_fields()
-        fields.update(updates)
-        replacement = PIRFactory.create(pir.get_type(), fields, record_id)
+        replacement = PIRFactory.create(pir.get_type(), {**pir.get_fields(), **updates}, record_id)
         self._pirs[record_id] = replacement
         return replacement
 

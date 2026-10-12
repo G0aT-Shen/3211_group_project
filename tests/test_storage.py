@@ -18,7 +18,7 @@ class StorageTests(unittest.TestCase):
             Storage.save(path, manager)
             loaded = Storage.load(path)
             self.assertEqual(loaded.get_pir(1).get_text(), "persist me")
-            self.assertEqual(json.loads(path.read_text())["schema_version"], 1)
+            self.assertEqual(json.loads(path.read_text(encoding='utf-8'))["schema_version"], 1)
 
     def test_corrupt_file_is_rejected(self):
         """Corrupt JSON raises StorageError rather than leaking decoder errors."""

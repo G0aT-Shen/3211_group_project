@@ -166,9 +166,9 @@ class IDBoundaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'exhausted.pim'
             path.write_text(json.dumps({'schema_version': 1, 'next_id': MAX_ID + 1, 'pirs': []}))
-            result = subprocess.run([sys.executable, str(ROOT / 'main.py')],
+            result = subprocess.run([sys.executable, '-X', 'utf8', str(ROOT / 'main.py')],
                                     input=f'load "{path}"\nadd text unreachable\nprint all\nexit\n',
-                                    text=True, capture_output=True, timeout=5)
+                                    text=True, encoding='utf-8', capture_output=True, timeout=5)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stderr, '')
             self.assertIn('exhausted', result.stdout)
@@ -186,8 +186,8 @@ class RegularFileTests(unittest.TestCase):
             os.mkfifo(fifo)
             saved = folder / 'kept.pim'
             commands = f'add text keep\nload "{fifo}"\nprint all\nsave "{saved}"\nexit\n'
-            result = subprocess.run([sys.executable, str(ROOT / 'main.py')], input=commands,
-                                    text=True, capture_output=True, timeout=3)
+            result = subprocess.run([sys.executable, '-X', 'utf8', str(ROOT / 'main.py')], input=commands,
+                                    text=True, encoding='utf-8', capture_output=True, timeout=3)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stderr, '')
             self.assertIn('regular file', result.stdout)

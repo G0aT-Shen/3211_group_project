@@ -8,7 +8,7 @@ A command-line personal information management system built on the Python standa
 
 Python 3.9+ is supported, with no third-party runtime dependencies. This revision was validated on macOS with Python 3.9.6 and 3.12.14. The preceding review revision was validated on Windows with Python 3.12.10 and 3.12.14.
 
-Current local status (10 October 2026 input-decoding fix, following the 5 October requirements audit): all 89 automated tests passed on both macOS interpreters, with no failures, errors or skips. Model line coverage on Python 3.12.14 is 439/443 (99.10%, including unexecuted lines). The requirements matrix covers all US1-US11 and the course code/test constraints. The root coverage text report was refreshed for this fix; documentation PDFs, including coverage_report.pdf, are from the 5 October audit and still state 88 tests, and presentation artifacts remain the earlier snapshot. The existing CI matrix covers Ubuntu with Python 3.9/3.11/3.12; hosted CI and Windows were not run for this revision.
+Current local status (12 October 2026 Windows compatibility follow-up): both macOS interpreters pass the 133-test suite with zero failures/errors and one skip for the real Windows CMD launcher test. Coverage on Python 3.12.14 is 436/440 model lines (99.09%). The preceding DSH fixes for Unicode whitespace, escaped trailing spaces and Unicode-prefixed filenames remain covered by 22 regression tests. Windows adaptation adds a UTF-8 launcher, rejects reserved devices and alternate data streams before filesystem access, fixes default-encoding assumptions in process tests, and checks Unicode directories and CRLF files/commands. CI now configures Windows, macOS and Ubuntu with Python 3.9/3.11/3.12; the Windows jobs also run the launcher. Actual Windows execution and hosted CI are pending for this revision. Checked-in PDF/PPTX artifacts remain older snapshots.
 
 ```bash
 python3 main.py
@@ -16,7 +16,16 @@ python3 -m unittest discover -v
 python3 tools/check_coverage.py
 ```
 
-On Windows with the Python launcher installed, use `py -3` in place of `python3`.
+On Windows, extract the ZIP into a writable folder first, then open PowerShell there:
+
+```powershell
+.\run_windows.cmd
+.\run_windows.cmd --check
+```
+
+The first command starts the application; the second runs the full test suite, refreshes `coverage_report.txt` and checks Python syntax, returning a nonzero status on failure. The script selects Python 3.9+ from PATH or the `py -3` launcher, enables UTF-8 and uses the project folder as its working directory even when launched elsewhere. It is also usable in CMD as `run_windows.cmd`, or by double-clicking to start the application. No pip installation is needed. For direct commands use `py -3 -X utf8` in place of `python3`.
+
+Enter application commands at `pim>`. Backslashes follow the same shell quoting rules on every OS, so put Windows paths in single quotes; forward slashes also work. For example: `save 'C:\Users\Professor\Desktop\review folder\records.pim'`. The destination folder must exist. Relative `.pim` files stay portable between macOS and Windows. Windows rejects device names such as `CON.pim`, data streams, illegal characters, trailing spaces/dots in path components and device/extended namespace paths (`\\.\`, `\\?\`); use an ordinary local or UNC path.
 
 ```text
 add text "Buy milk"

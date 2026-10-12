@@ -33,14 +33,17 @@ def parse_datetime(value: Any) -> datetime:
     if not isinstance(value, str) or not value.strip():
         raise ValidationError("Time must be YYYY-MM-DD HH:MM")
     text = value.strip()
-    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::00)?)?", text):
+    # Keep the application's accepted spelling narrower than ISO 8601:
+    # ASCII digits, local time and minute precision.
+    if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}(?:[ T][0-9]{2}:[0-9]{2}(?::00)?)?", text):
         raise ValidationError("Time must use YYYY-MM-DD HH:MM (or a date alone)")
-    for fmt in (DATETIME_FORMAT, "%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M"):
-        try:
-            return datetime.strptime(text, fmt)
-        except ValueError:
-            continue
-    raise ValidationError(f"Invalid time: {value} (expected YYYY-MM-DD HH:MM)")
+    try:
+        # Only the stored ISO form accepts the explicit zero seconds suffix.
+        if len(text) == 19 and text[10] == " ":
+            raise ValueError
+        return datetime.fromisoformat(text)
+    except ValueError:
+        raise ValidationError(f"Invalid time: {value} (expected YYYY-MM-DD HH:MM)") from None
 
 
 def format_datetime(value: datetime) -> str:
@@ -81,9 +84,7 @@ class PIR(ABC):
         """Return fields excluding id and type."""
 
     def to_dict(self) -> dict[str, Any]:
-        data: dict[str, Any] = {"id": self._id, "type": self.type_name}
-        data.update(self.get_fields())
-        return data
+        return {"id": self._id, "type": self.type_name, **self.get_fields()}
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> PIR:

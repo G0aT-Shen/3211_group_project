@@ -18,7 +18,7 @@ class ConsoleEncodingTests(unittest.TestCase):
         snapshot = {'schema_version': 1, 'next_id': 2,
                     'pirs': [{'id': 1, 'type': 'text', 'text': text}]}
         commands = 'load records.pim\nadd text unsaved\nprint all\nsave kept.pim\nexit\n'
-        for encoding in ('ascii', 'utf-8'):
+        for encoding in ('ascii', 'cp1252', 'cp936', 'utf-8'):
             with self.subTest(encoding=encoding), tempfile.TemporaryDirectory() as folder:
                 path = Path(folder)
                 (path / 'records.pim').write_text(json.dumps(snapshot), encoding='utf-8')

@@ -47,7 +47,41 @@ def manifest(root):
     path.write_text(json.dumps({'schema_version': 1, 'sha256': hashes}))
 
 
+def complete_submission(root):
+    """Create a consistent submission fixture, including explicit human approvals."""
+    for name in checker.REQUIRED:
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b'%PDF-test' if path.suffix == '.pdf' else b'test')
+    (root / 'output/demo/system_demo.mp4').write_bytes(mp4(124))
+    (root / 'submission_inputs/presentation_recording.mp4').write_bytes(mp4(280))
+    (root / 'submission_inputs/review_status.json').write_text(json.dumps(dict.fromkeys(checker.APPROVALS, True)))
+    (root / 'docs/team_members.json').write_text('{"members": ["Alice"]}')
+    pptx(root / 'output/presentation/PIM_presentation.pptx')
+    manifest(root)
+
+
 class SubmissionTests(unittest.TestCase):
+    def test_unreadable_submission_files_are_reported_without_crashing(self):
+        """Unreadable PDFs, approval data and document sources remain actionable gate failures."""
+        for name in ('coverage_report.pdf', 'submission_inputs/review_status.json', 'docs/SRS.md'):
+            with self.subTest(file=name), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(b'%PDF-test' if target.suffix == '.pdf' else b'{}')
+                original_open = Path.open
+
+                def denied(path, *args, **kwargs):
+                    if path == target:
+                        raise PermissionError('permission denied')
+                    return original_open(path, *args, **kwargs)
+
+                with patch.object(Path, 'open', denied):
+                    issues = checker.check(root)
+                self.assertTrue(any('permission denied' in issue for issue in issues), issues)
+                self.assertTrue(any('Missing or empty' in issue for issue in issues), issues)
+
     def test_nested_mp4_is_reported_as_invalid_without_crashing(self):
         """Malformed box nesting cannot crash either duration parsing or the release gate."""
         payload = mp4(1)
@@ -82,9 +116,14 @@ class SubmissionTests(unittest.TestCase):
             root = Path(folder) / 'source'
             root.mkdir()
             shutil.copyfile(source_root / 'main.py', root / 'main.py')
+            shutil.copyfile(source_root / 'run_windows.cmd', root / 'run_windows.cmd')
+            shutil.copyfile(source_root / '.gitattributes', root / '.gitattributes')
+            shutil.copytree(source_root / '.github', root / '.github')
             for package in ['model', 'controller', 'cli', 'storage', 'view', 'tests', 'tools']:
                 shutil.copytree(source_root / package, root / package,
                                 ignore=shutil.ignore_patterns('__pycache__'))
+            for name in ('private.pim', '.env', 'tools/private.json'):
+                (root / name).write_text('must not be packaged')
             with patch.object(packager, 'ROOT', root), \
                     patch.object(packager, 'check', return_value=['Test fixture: pending review']), \
                     patch.object(sys, 'argv', ['package_submission.py', '--draft']), \
@@ -92,10 +131,15 @@ class SubmissionTests(unittest.TestCase):
                 self.assertEqual(packager.main(), 0)
             extracted = Path(folder) / 'extracted'
             with zipfile.ZipFile(next((root / 'submission').glob('*.zip'))) as archive:
+                self.assertFalse({'private.pim', '.env', 'tools/private.json'} & set(archive.namelist()))
                 archive.extractall(extracted)
             for name in ['build_slides.mjs', 'render_documents.py', 'render_demo_frames.py', 'encode_demo.swift']:
                 self.assertEqual((extracted / 'tools' / name).read_bytes(), (source_root / 'tools' / name).read_bytes())
             self.assertTrue((extracted / 'main.py').is_file())
+            self.assertEqual((extracted / 'run_windows.cmd').read_bytes(), (source_root / 'run_windows.cmd').read_bytes())
+            self.assertEqual((extracted / '.gitattributes').read_bytes(), (source_root / '.gitattributes').read_bytes())
+            self.assertEqual((extracted / '.github/workflows/tests.yml').read_bytes(),
+                             (source_root / '.github/workflows/tests.yml').read_bytes())
             self.assertTrue((extracted / 'REVIEW_DRAFT_NOT_FINAL.txt').is_file())
 
     def test_coverage_counts_unreported_source_as_missed(self):
@@ -119,18 +163,8 @@ class SubmissionTests(unittest.TestCase):
         """All files plus explicit review are required; overlong video is rejected."""
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            for name in checker.REQUIRED:
-                path = root / name
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(b'%PDF-test' if path.suffix == '.pdf' else b'test')
-            (root/'output/demo/system_demo.mp4').write_bytes(mp4(124))
-            (root/'submission_inputs/presentation_recording.mp4').write_bytes(mp4(280))
+            complete_submission(root)
             status = root/'submission_inputs/review_status.json'
-            status.write_text(json.dumps(dict.fromkeys(checker.APPROVALS, True)))
-            (root/'docs').mkdir(exist_ok=True)
-            (root/'docs/team_members.json').write_text('{"members": ["Alice"]}')
-            pptx(root/'output/presentation/PIM_presentation.pptx')
-            manifest(root)
             self.assertEqual(checker.check(root), [])
             (root/'output/demo/system_demo.mp4').write_bytes(mp4(241))
             self.assertTrue(any('excessive duration' in issue for issue in checker.check(root)))
@@ -160,13 +194,7 @@ class SubmissionTests(unittest.TestCase):
         """A valid PPTX cannot mask a PDF or member configuration from an older build."""
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            for name in checker.REQUIRED:
-                path = root/name
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(b'%PDF-test' if path.suffix == '.pdf' else b'test')
-            (root/'docs/team_members.json').write_text('{"members": ["Alice"]}')
-            pptx(root/'output/presentation/PIM_presentation.pptx')
-            manifest(root)
+            complete_submission(root)
             self.assertEqual(checker.presentation_issues(root), [])
             (root/'output/presentation/PIM_presentation.pdf').write_bytes(b'%PDF-older')
             self.assertTrue(any('Stale presentation build' in issue and '.pdf' in issue

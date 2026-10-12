@@ -6,7 +6,6 @@ import re
 from xml.sax.saxutils import escape
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_LEFT
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Preformatted, Table, TableStyle, PageBreak, KeepTogether
@@ -107,6 +106,17 @@ def footer(canvas, doc):
     canvas.drawRightString(550,25,str(doc.page))
 
 
+def signature(node):
+    returns = ast.unparse(node.returns) if node.returns else '(see contract)'
+    return f'{node.name}({ast.unparse(node.args)}) -> {returns}'
+
+
+def build_pdf(story, name, title, **metadata):
+    SimpleDocTemplate(str(OUT / name), pagesize=(595.28, 841.89),
+                      rightMargin=55, leftMargin=55, topMargin=45, bottomMargin=45,
+                      title=title, **metadata).build(story, onFirstPage=footer, onLaterPages=footer)
+
+
 def api_appendix():
     result=[PageBreak(),Paragraph('Source signature inventory',STYLES['Heading1'])]
     result.append(Paragraph('Generated from the current Python AST. Exception contracts and field definitions are explained in section 3.', STYLES['BodyPIM']))
@@ -116,12 +126,12 @@ def api_appendix():
             entries=[]
             for node in tree.body:
                 if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)):
-                    entries.append(f'{node.name}({ast.unparse(node.args)}) -> {ast.unparse(node.returns) if node.returns else "(see contract)"}')
+                    entries.append(signature(node))
                 elif isinstance(node,ast.ClassDef):
                     entries.append('class '+node.name)
                     for method in node.body:
                         if isinstance(method,ast.FunctionDef):
-                            entries.append(f'  {method.name}({ast.unparse(method.args)}) -> {ast.unparse(method.returns) if method.returns else "(see contract)"}')
+                            entries.append('  ' + signature(method))
             if entries:
                 result.append(Paragraph(str(source.relative_to(ROOT)),STYLES['Heading2']))
                 for entry in entries:
@@ -165,8 +175,7 @@ def render(source, name):
             story.append(Paragraph(styled(line.lstrip('#').strip()),style)); continue
         story.append(Paragraph(styled(line),STYLES['BodyPIM']))
     if name == 'design.pdf': story.extend(api_appendix())
-    SimpleDocTemplate(str(OUT/name),pagesize=(595.28,841.89),rightMargin=55,leftMargin=55,topMargin=45,bottomMargin=45,
-                      title=content[0].lstrip('# '),author='COMP3211 project group (names pending)').build(story,onFirstPage=footer,onLaterPages=footer)
+    build_pdf(story, name, content[0].lstrip('# '), author='COMP3211 project group (names pending)')
 
 
 def render_coverage():
@@ -174,9 +183,7 @@ def render_coverage():
     story = [Paragraph('Model Line Coverage Report', STYLES['Title'])]
     story.extend(Paragraph(styled(line), STYLES['BodyPIM']) for line in metadata.splitlines())
     story.extend([Spacer(1,12), Preformatted(table, STYLES['CodePIM'])])
-    SimpleDocTemplate(str(OUT/'coverage_report.pdf'), pagesize=(595.28,841.89),
-                      rightMargin=55,leftMargin=55,topMargin=45,bottomMargin=45,
-                      title='Model Line Coverage Report').build(story,onFirstPage=footer,onLaterPages=footer)
+    build_pdf(story, 'coverage_report.pdf', 'Model Line Coverage Report')
     (ROOT/'coverage_report.pdf').write_bytes((OUT/'coverage_report.pdf').read_bytes())
 
 

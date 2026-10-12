@@ -35,6 +35,8 @@ def read_until(master, marker, timeout=5):
                 break
     else:
         raise RuntimeError(f'CLI did not return expected prompt: {marker}')
+    if marker and marker.encode() not in data:
+        raise RuntimeError(f'CLI did not return expected prompt: {marker}')
     return data.decode('utf-8').replace('\r\n', '\n')
 
 
@@ -60,22 +62,23 @@ def capture():
     ]
     with tempfile.TemporaryDirectory() as folder:
         master, slave = pty.openpty()
-        process = subprocess.Popen([sys.executable, '-u', str(ROOT / 'main.py')], stdin=slave, stdout=slave, stderr=slave, cwd=folder)
-        os.close(slave)
-        try:
-            segments = [{'caption': 'Real application execution: COMP3211 PIM', 'output': read_until(master, 'pim> '), 'seconds': 5}]
-            for caption, command, marker in commands:
-                os.write(master, (command + '\n').encode())
-                output = read_until(master, marker)
-                segments.append({'caption': caption, 'command': command, 'output': output, 'seconds': 7})
-            process.wait(timeout=5)
-            if process.returncode:
-                raise RuntimeError(f'CLI failed: {process.returncode}')
-        finally:
-            os.close(master)
-            if process.poll() is None:
-                process.terminate()
+        with os.fdopen(master, 'rb', buffering=0), os.fdopen(slave, 'wb', buffering=0) as child_terminal:
+            process = subprocess.Popen([sys.executable, '-u', str(ROOT / 'main.py')],
+                                       stdin=slave, stdout=slave, stderr=slave, cwd=folder)
+            child_terminal.close()
+            try:
+                segments = [{'caption': 'Real application execution: COMP3211 PIM', 'output': read_until(master, 'pim> '), 'seconds': 5}]
+                for caption, command, marker in commands:
+                    os.write(master, (command + '\n').encode())
+                    output = read_until(master, marker)
+                    segments.append({'caption': caption, 'command': command, 'output': output, 'seconds': 7})
                 process.wait(timeout=5)
+                if process.returncode:
+                    raise RuntimeError(f'CLI failed: {process.returncode}')
+            finally:
+                if process.poll() is None:
+                    process.terminate()
+                    process.wait(timeout=5)
     return {'provenance': 'stdout/stderr captured from the real main.py process via PTY; captions/pacing added for readability',
             'python': sys.version.split()[0], 'segments': segments}
 

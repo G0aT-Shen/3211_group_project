@@ -24,8 +24,8 @@ class RegressionTests(unittest.TestCase):
             commands = ['add text original', 'search "=||\'\\\'\'"',
                         'print 1', 'save kept.pim', 'exit']
             result = subprocess.run(
-                [sys.executable, str(Path(__file__).resolve().parents[1] / 'main.py')],
-                input='\n'.join(commands) + '\n', text=True, capture_output=True,
+                [sys.executable, '-X', 'utf8', str(Path(__file__).resolve().parents[1] / 'main.py')],
+                input='\n'.join(commands) + '\n', text=True, encoding='utf-8', capture_output=True,
                 cwd=folder, timeout=15)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stderr, '')

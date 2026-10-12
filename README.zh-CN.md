@@ -8,7 +8,7 @@ Python 标准库实现的命令行个人信息管理系统，支持文本、任�
 
 支持 Python 3.9+，无运行时第三方依赖。本轮在 macOS 的 Python 3.9.6 和 3.12.14 验证；上一轮审查版本曾在 Windows 的 Python 3.12.10 和 3.12.14 验证。
 
-当前本地验证（2026 年 10 月 10 日输入解码修复，继 10 月 5 日需求逐项审查之后）：两个 macOS 解释器均通过全部 89 项自动化测试，零失败、零错误、零跳过；Python 3.12.14 下的模型行覆盖率为 439/443（99.10%，包含未执行行）。需求覆盖表逐项覆盖 US1-US11 及课程代码/测试约束。本次修复已刷新根目录覆盖率文本报告；文档 PDF（含 coverage_report.pdf）仍为 10 月 5 日版本，其中仍写 88 项测试；演示文稿仍为此前快照。现有 CI 矩阵在 Ubuntu 上运行 Python 3.9/3.11/3.12；本轮未运行 Windows 或远程 CI。
+当前本地验证（2026 年 10 月 12 日 Windows 适配）：macOS 两套 Python 均通过 133 项测试套件，零失败、零错误，仅真实 Windows CMD 启动器测试跳过。Python 3.12.14 的模型行覆盖率为 436/440（99.09%）。此前 DSH 修复的 Unicode 空白、转义尾空格和 Unicode 前缀文件名问题仍由 22 项回归测试覆盖。本轮加入 UTF-8 启动器、在访问文件前拒绝 Windows 保留设备名和备用数据流、修正子进程测试对默认编码的依赖，并检查中文目录及 CRLF 文件和命令。CI 已配置 Windows、macOS、Ubuntu 与 Python 3.9/3.11/3.12 的矩阵，Windows 作业同时检查启动器。本轮尚待实际 Windows 和远程 CI 验证；现有 PDF/PPTX 仍为较早快照。
 
 ```bash
 python3 main.py
@@ -16,7 +16,16 @@ python3 -m unittest discover -v
 python3 tools/check_coverage.py
 ```
 
-Windows 已安装 Python 启动器时，将上述 `python3` 替换为 `py -3`。
+Windows 请先将 ZIP 解压到可写目录，在该目录打开 PowerShell：
+
+```powershell
+.\run_windows.cmd
+.\run_windows.cmd --check
+```
+
+第一条启动应用；第二条运行完整测试、刷新 `coverage_report.txt` 并检查 Python 语法，失败时返回非零状态。脚本从 PATH 或 `py -3` 启动器选择 Python 3.9+，启用 UTF-8；从其他目录启动时也会使用项目目录作为工作目录。在 CMD 中可直接输入 `run_windows.cmd`，也可双击脚本启动应用。无需 pip 安装。手动执行其他命令时，将 `python3` 换为 `py -3 -X utf8`。
+
+应用命令应输入在 `pim>` 提示符后。各系统使用相同的引号和转义规则，因此 Windows 反斜杠路径请用单引号括起；正斜杠路径也可用。例如：`save 'C:\Users\Professor\Desktop\review folder\records.pim'`。目标目录必须已存在；相对路径保存的 `.pim` 文件可在 macOS 与 Windows 互读。Windows 会拒绝 `CON.pim` 等设备名、备用数据流、非法字符、路径组件末尾的空格或句点，以及设备/扩展命名空间路径（`\\.\`、`\\?\`）；请使用普通本地或 UNC 路径。
 
 ```text
 add text "Buy milk"

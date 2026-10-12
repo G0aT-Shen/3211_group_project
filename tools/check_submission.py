@@ -10,7 +10,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = [
-    'main.py', 'README.md', 'requirements_coverage.md', 'requirements_coverage.pdf', 'coverage_report.txt', 'coverage_report.pdf',
+    'main.py', 'run_windows.cmd', 'README.md', 'requirements_coverage.md', 'requirements_coverage.pdf', 'coverage_report.txt', 'coverage_report.pdf',
     'output/pdf/SRS.pdf', 'output/pdf/design.pdf', 'output/pdf/dev_manual.pdf',
     'output/pdf/user_manual.pdf', 'output/pdf/requirements_coverage.pdf',
     'output/demo/system_demo.mp4', 'output/presentation/PIM_presentation.pdf',
@@ -141,10 +141,15 @@ def check(root=ROOT):
     issues = []
     for name in REQUIRED:
         path = root / name
-        if not path.is_file() or not path.stat().st_size:
-            issues.append('Missing or empty: ' + name)
-        elif path.suffix == '.pdf' and path.read_bytes()[:5] != b'%PDF-':
-            issues.append('Invalid PDF signature: ' + name)
+        try:
+            if not path.is_file() or not path.stat().st_size:
+                issues.append('Missing or empty: ' + name)
+            elif path.suffix == '.pdf':
+                with path.open('rb') as stream:
+                    if stream.read(5) != b'%PDF-':
+                        issues.append('Invalid PDF signature: ' + name)
+        except OSError as exc:
+            issues.append(f'Could not inspect {name}: {exc}')
     for name, maximum in [('output/demo/system_demo.mp4', 240), ('submission_inputs/presentation_recording.mp4', 300)]:
         path = root / name
         if path.is_file():
@@ -160,15 +165,18 @@ def check(root=ROOT):
             for name in APPROVALS:
                 if status.get(name) is not True:
                     issues.append('Human review pending: ' + name)
-        except (ValueError, UnicodeError) as exc:
+        except (OSError, ValueError) as exc:
             issues.append('Invalid review status: ' + str(exc))
     else:
         issues.extend('Human review pending: ' + name for name in APPROVALS)
     # Markers in official doc sources must be resolved before regenerating final PDFs.
     for name in ['docs/SRS.md', 'docs/presentation_script.md']:
         path = root / name
-        if path.is_file() and TEAM_MARKER in path.read_text(encoding='utf-8'):
-            issues.append('Unresolved team placeholder: ' + name)
+        try:
+            if path.is_file() and TEAM_MARKER in path.read_text(encoding='utf-8'):
+                issues.append('Unresolved team placeholder: ' + name)
+        except (OSError, UnicodeError) as exc:
+            issues.append(f'Could not read {name}: {exc}')
     issues.extend(presentation_issues(root))
     return issues
 

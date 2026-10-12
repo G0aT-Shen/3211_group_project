@@ -71,3 +71,10 @@ This file records project implementation, verification, and documentation update
 - [ ] Record a presenters-on-camera report of no more than 5 minutes, each member speaking at least 1 minute and meeting the on-camera/student-card requirement
 - [ ] Have the team review code and documents, fill in the real `review_status`, and build the final ZIP
 - [x] Verify the hosted GitHub Actions CI after pushing (run `35303259313`, Python 3.9/3.11/3.12 all succeeded)
+
+## 2026-10-12: Windows review compatibility
+
+1. Added run_windows.cmd (CRLF) to launch with Python 3.9+ and UTF-8 from the project folder; --check runs tests/coverage and syntax checks. PATH selection preserves the interpreter chosen by a virtual environment or CI.
+2. Added Windows-only path validation before filesystem access for reserved devices, alternate data streams, illegal/trailing characters and device/extended namespaces. Documented single-quoted backslash paths, forward slashes and Unicode file portability.
+3. Fixed subprocess-test encoding assumptions and added checks for CP1252/CP936 output, Unicode/spaced source and data directories, CRLF input/files, exact drive/UNC arguments and native CMD startup. Updated packaging to include the launcher, .gitattributes and CI workflow.
+4. Configured Windows/macOS/Ubuntu CI for Python 3.9/3.11/3.12. Local macOS 3.9.6 and 3.12.14 pass the 133-test suite with zero failures/errors and one native-Windows test skip. The CP1252 default simulation also passes the suite. Compilation and diff checks pass; model coverage is 436/440 (99.09%). Actual Windows and hosted CI are pending; PDF/PPTX exports and team approvals remain unchanged.
