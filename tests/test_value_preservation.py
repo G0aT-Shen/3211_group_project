@@ -1,6 +1,6 @@
 """Regressions: whitespace that is not a POSIX separator is record data.
 
-``docs/design.md`` section 4 fixes the word model used by creation and search:
+``output/pdf/design.pdf`` section 4 fixes the word model used by creation and search:
 words separate on the POSIX shell set (space, tab, CR, LF) exactly like ``shlex``
 and the command parser, so any other whitespace character is part of a word.
 FR-02 requires ``add text`` to preserve its content including Unicode, FR-06

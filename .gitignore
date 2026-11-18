@@ -30,6 +30,8 @@ submission/
 submission_inputs/
 .workbuddy/
 .codex-finalizer/
+.claude/
+.dsh/
 *.pim
 node_modules/
 

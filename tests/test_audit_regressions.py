@@ -14,7 +14,7 @@ Three defects were reproduced against the pre-fix revision and are pinned here:
    ``strptime``'s %Y matches ``\\d``, although DR-01 defines only the ASCII
    ``YYYY-MM-DD`` pattern.
 
-The contract behind defect 2 is docs/user_manual.md: "A search expression may be
+The contract behind defect 2 is output/pdf/user_manual.pdf: "A search expression may be
 entered directly or inside a single outer pair of quotes." The outer pair is
 therefore only a container: both entry forms receive the same expression text and
 are shell-decoded exactly once. Nesting still switches quote style inside the
